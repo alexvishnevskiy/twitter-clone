@@ -29,6 +29,7 @@ func New(driverName string, dataSourceName string) (*Repository, error) {
 	return &Repository{db}, nil
 }
 
+// Put new tweet to database
 func (r *Repository) Put(
 	ctx context.Context,
 	userId model.UserId,
@@ -50,6 +51,7 @@ func (r *Repository) Put(
 	return &tweetId, err
 }
 
+// helper function to retrieve tweets from database
 func get(ctx context.Context, r *Repository, idName string, ids []interface{}) ([]model.Tweet, error) {
 	placeholder := strings.TrimSuffix(strings.Repeat("?,", len(ids)), ",")
 	query := fmt.Sprintf("SELECT * FROM Tweets WHERE %s IN (%s)", idName, placeholder)
@@ -60,6 +62,7 @@ func get(ctx context.Context, r *Repository, idName string, ids []interface{}) (
 	defer rows.Close()
 
 	var res []model.Tweet
+	// iterate over result
 	for rows.Next() {
 		var tweet model.Tweet
 		var createdAtStr string
@@ -86,6 +89,7 @@ func get(ctx context.Context, r *Repository, idName string, ids []interface{}) (
 	return res, nil
 }
 
+// GetByTweet Retrieve by tweet id
 func (r *Repository) GetByTweet(ctx context.Context, tweetIds ...model.TweetId) ([]model.Tweet, error) {
 	// TODO: probably add some filters
 	interfaceTweetIds := make([]interface{}, len(tweetIds))
@@ -95,6 +99,7 @@ func (r *Repository) GetByTweet(ctx context.Context, tweetIds ...model.TweetId) 
 	return get(ctx, r, "tweet_id", interfaceTweetIds)
 }
 
+// GetByUser Retieve by user id
 func (r *Repository) GetByUser(ctx context.Context, userIds ...model.UserId) ([]model.Tweet, error) {
 	// TODO: probably add some filters
 	interfaceTweetIds := make([]interface{}, len(userIds))
@@ -104,6 +109,7 @@ func (r *Repository) GetByUser(ctx context.Context, userIds ...model.UserId) ([]
 	return get(ctx, r, "user_id", interfaceTweetIds)
 }
 
+// DeletePost delete post by tweet id
 func (r *Repository) DeletePost(ctx context.Context, postId model.TweetId) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM Tweets WHERE tweet_id = ?", postId)
 	return err

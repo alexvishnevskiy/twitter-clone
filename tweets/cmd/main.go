@@ -16,6 +16,7 @@ func main() {
 	flag.Parse()
 	log.Printf("Starting the tweets service on port %d", port)
 
+	// probably use configs for driverName and dataSourceName
 	repository, err := mysql.New("mysql", "root:root@tcp(localhost:3306)/twitter")
 	if err != nil {
 		log.Printf("Error: %v\n", err)

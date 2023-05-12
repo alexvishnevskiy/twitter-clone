@@ -21,6 +21,7 @@ func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
 }
 
+// Retrieve either by tweet id or user id
 func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 	err := req.ParseForm()
 	if err != nil {
@@ -77,6 +78,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// Delete by tweet id
 func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -96,6 +98,7 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// Post tweet
 func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

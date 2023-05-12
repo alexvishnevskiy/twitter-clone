@@ -5,6 +5,8 @@ import "time"
 type UserId int
 type TweetId int
 
+// tweets data model
+
 type Tweet struct {
 	UserId    UserId    `json:"user_id"`
 	TweetId   TweetId   `json:"tweet_id"`
