@@ -35,7 +35,7 @@ func (r *Repository) Put(
 	content string,
 	mediaUrl *string,
 	retweetId *model.TweetId,
-) (*int64, error) {
+) (*model.TweetId, error) {
 	createdAt := time.Now()
 	row, err := r.db.ExecContext(
 		ctx,
@@ -46,7 +46,8 @@ func (r *Repository) Put(
 		return nil, err
 	}
 	id, err := row.LastInsertId()
-	return &id, err
+	tweetId := model.TweetId(id)
+	return &tweetId, err
 }
 
 func get(ctx context.Context, r *Repository, idName string, ids []interface{}) ([]model.Tweet, error) {
