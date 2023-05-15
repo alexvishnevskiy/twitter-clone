@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS Tweets (
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_tweets_created_at
+    ON Tweets (created_at);
+
 CREATE TABLE IF NOT EXISTS Likes (
     user_id INT NOT NULL,
     tweet_id INT NOT NULL,
