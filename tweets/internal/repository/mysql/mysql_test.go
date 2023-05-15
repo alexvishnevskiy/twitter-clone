@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"testing"
 	"time"
 )
@@ -57,7 +59,7 @@ func TestRepository_DeletePost(t *testing.T) {
 	}
 }
 
-func TestRepository_GetByTweet(t *testing.T) {
+func TestRepository_Get(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -66,66 +68,67 @@ func TestRepository_GetByTweet(t *testing.T) {
 
 	repo := Repository{db}
 	ctx := context.Background()
-
-	// Create rows to return
-	rows := sqlmock.NewRows([]string{"user_id", "tweet_id", "retweet_id", "content", "media_url", "created_at"}).
-		AddRow(1, 1, 2, "content", "url", time.Now().Format(layout))
-	// Set expectation
-	mock.ExpectQuery("^SELECT \\* FROM Tweets WHERE tweet_id IN \\(\\?\\)$").
-		WithArgs(1).
-		WillReturnRows(rows)
-
-	// Call the get method
-	res, err := repo.GetByTweet(ctx, model.TweetId(1))
-	if err != nil {
-		t.Errorf("error was not expected while getting tweet: %s", err)
-	}
-	// We make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
+	// what we want
+	curTime := time.Now()
+	mediaUrl := "url"
+	retweetId := model.TweetId(2)
+	want := model.Tweet{
+		TweetId:   model.TweetId(1),
+		UserId:    model.UserId(1),
+		RetweetId: &retweetId,
+		MediaUrl:  &mediaUrl,
+		Content:   "content",
+		CreatedAt: curTime,
 	}
 
-	testId := model.TweetId(1)
-	userId := model.UserId(1)
-	testUrl := "url"
-	if res[0].TweetId == testId && res[0].UserId == userId && res[0].MediaUrl == &testUrl && res[0].Content == "content" {
-		t.Errorf("unexpected results")
+	testCases := []struct {
+		name  string
+		query string
+	}{
+		{
+			name:  "GetByTweet",
+			query: "^SELECT \\* FROM Tweets WHERE tweet_id IN \\(\\?\\)$",
+		},
+		{
+			name:  "GetByUser",
+			query: "^SELECT \\* FROM Tweets WHERE user_id IN \\(\\?\\)$",
+		},
 	}
-}
+	for _, tc := range testCases {
+		t.Run(
+			tc.name, func(t *testing.T) {
+				// Create rows to return
+				rows := sqlmock.NewRows([]string{"user_id", "tweet_id", "retweet_id", "content", "media_url", "created_at"}).
+					AddRow(1, 1, 2, "content", "url", curTime.Format(layout))
+				// Set expectation
+				mock.ExpectQuery(tc.query).
+					WithArgs(1).
+					WillReturnRows(rows)
 
-func TestRepository_GetByUser(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+				var (
+					res []model.Tweet
+					err error
+				)
+				// Call the get method
+				switch tc.name {
+				case "GetByTweet":
+					res, err = repo.GetByTweet(ctx, model.TweetId(1))
+				case "GetByUser":
+					res, err = repo.GetByUser(ctx, model.UserId(1))
+				}
 
-	repo := Repository{db}
-	ctx := context.Background()
-
-	// Create rows to return
-	rows := sqlmock.NewRows([]string{"user_id", "tweet_id", "retweet_id", "content", "media_url", "created_at"}).
-		AddRow(1, 1, 2, "content", "url", time.Now().Format(layout))
-	// Set expectation
-	mock.ExpectQuery("^SELECT \\* FROM Tweets WHERE user_id IN \\(\\?\\)$").
-		WithArgs(1).
-		WillReturnRows(rows)
-
-	// Call the get method
-	res, err := repo.GetByUser(ctx, model.UserId(1))
-	if err != nil {
-		t.Errorf("error was not expected while deleting: %s", err)
-	}
-	// We make sure that all expectations were met
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
-
-	testId := model.TweetId(1)
-	userId := model.UserId(1)
-	testUrl := "url"
-	if res[0].TweetId == testId && res[0].UserId == userId &&
-		res[0].MediaUrl == &testUrl && res[0].Content == "content" {
-		t.Errorf("unexpected results")
+				if err != nil {
+					t.Errorf("error was not expected while getting tweet: %s", err)
+				}
+				// We make sure that all expectations were met
+				if err := mock.ExpectationsWereMet(); err != nil {
+					t.Errorf("there were unfulfilled expectations: %s", err)
+				}
+				// compare structures
+				if diff := cmp.Diff(want, res[0], cmpopts.IgnoreFields(model.Tweet{}, "CreatedAt")); diff != "" {
+					t.Errorf("mismatch (-want +got):\n%s", diff)
+				}
+			},
+		)
 	}
 }
