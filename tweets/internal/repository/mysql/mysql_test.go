@@ -89,7 +89,7 @@ func TestRepository_GetByTweet(t *testing.T) {
 	userId := model.UserId(1)
 	testUrl := "url"
 	if res[0].TweetId == testId && res[0].UserId == userId && res[0].MediaUrl == &testUrl && res[0].Content == "content" {
-		t.Fatal("unexpected results")
+		t.Errorf("unexpected results")
 	}
 }
 
@@ -126,6 +126,6 @@ func TestRepository_GetByUser(t *testing.T) {
 	testUrl := "url"
 	if res[0].TweetId == testId && res[0].UserId == userId &&
 		res[0].MediaUrl == &testUrl && res[0].Content == "content" {
-		t.Fatal("unexpected results")
+		t.Errorf("unexpected results")
 	}
 }
