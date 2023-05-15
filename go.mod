@@ -3,6 +3,7 @@ module github.com/alexvishnevskiy/twitter-clone
 go 1.19
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

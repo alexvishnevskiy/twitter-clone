@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+// time layout
+const layout = "2006-01-02 15:04:05"
+
 // Repository defines a MySQL-based repository.
 type Repository struct {
 	db *sql.DB
@@ -41,7 +44,7 @@ func (r *Repository) Put(
 	row, err := r.db.ExecContext(
 		ctx,
 		"INSERT INTO Tweets (user_id, retweet_id, content, media_url, created_at) VALUES (?, ?, ?, ?, ?)",
-		userId, retweetId, content, mediaUrl, createdAt,
+		userId, retweetId, content, mediaUrl, createdAt.Format(layout),
 	)
 	if err != nil {
 		return nil, err
@@ -75,7 +78,6 @@ func get(ctx context.Context, r *Repository, idName string, ids []interface{}) (
 			return nil, err
 		}
 
-		const layout = "2006-01-02 15:04:05"
 		createdAt, err := time.Parse(layout, createdAtStr)
 		if err != nil {
 			return nil, err
