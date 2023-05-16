@@ -5,6 +5,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
@@ -25,6 +26,7 @@ func New(ctrl *controller.Controller) *Handler {
 func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 	err := req.ParseForm()
 	if err != nil {
+		// TODO: write more concise error to w
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -33,6 +35,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 	tweets, tweetsOk := req.Form["tweet_id"]
 
 	if !userOk && !tweetsOk {
+		// TODO: write more concise error to w
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -42,6 +45,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		for i, user := range users {
 			userId, err := strconv.Atoi(user)
 			if err != nil {
+				// TODO: write more concise error to w
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -49,6 +53,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		}
 		tweets, err := h.ctrl.RetrieveByUserID(req.Context(), userIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
+			// TODO: write more concise error to w
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -62,6 +67,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		for i, tweet := range tweets {
 			tweetId, err := strconv.Atoi(tweet)
 			if err != nil {
+				// TODO: write more concise error to w
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
@@ -69,6 +75,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		}
 		tweets, err := h.ctrl.RetrieveByTweetID(req.Context(), tweetIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
+			// TODO: write more concise error to w
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -87,6 +94,7 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 
 	tweet, err := strconv.Atoi(req.FormValue("tweet_id"))
 	if err != nil {
+		// TODO: write more concise error to w
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -94,6 +102,8 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 	tweetID := model.TweetId(tweet)
 	err = h.ctrl.DeletePost(req.Context(), tweetID)
 	if err != nil {
+		// TODO: write more concise error to w
+		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("Failed to delete post: %v\n", err)
 	}
 }
@@ -118,12 +128,12 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	retweet_id := req.FormValue("retweet_id") //optional
 
 	if user_id == "" && content == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "user_id and content are empty", http.StatusBadRequest)
 		return
 	}
 	user, err := strconv.Atoi(user_id)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to parse user_id: %s", user_id), http.StatusBadRequest)
 		return
 	}
 	userId = model.UserId(user)
@@ -135,7 +145,7 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if retweet, err := strconv.Atoi(retweet_id); retweet_id != "" && err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to parse retweet_id: %s", retweet_id), http.StatusBadRequest)
 		return
 	} else if retweet_id != "" {
 		retweet_id := model.TweetId(retweet)
@@ -144,8 +154,12 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 		retweetId = nil
 	}
 
-	_, err = h.ctrl.PostNewTweet(req.Context(), userId, content, mediaUrl, retweetId)
+	tweetId, err := h.ctrl.PostNewTweet(req.Context(), userId, content, mediaUrl, retweetId)
 	if err != nil {
-		log.Printf("Failed to post tweet: %v\n", err)
+		http.Error(w, "failed to post tweet", http.StatusBadRequest)
+	}
+	if err := json.NewEncoder(w).Encode(tweetId); err != nil {
+		http.Error(w, "response encode error", http.StatusInternalServerError)
+		log.Printf("Response encode error: %v\n", err)
 	}
 }
