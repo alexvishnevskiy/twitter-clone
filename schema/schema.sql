@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS Tweets (
     media_url VARCHAR(50) NULL,
     created_at TIMESTAMP NOT NULL,
     PRIMARY KEY (tweet_id),
-    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (retweet_id) REFERENCES Tweets(tweet_id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_tweets_created_at
@@ -41,24 +42,3 @@ CREATE TABLE IF NOT EXISTS Followers (
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
     FOREIGN KEY (following_id) REFERENCES User(user_id) ON DELETE CASCADE
 );
-
-DELIMITER $$
-CREATE PROCEDURE RaiseException()
-BEGIN
-    DECLARE msg VARCHAR(255);
-    SET msg = "retweet_id does not exist in Tweets table.";
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = msg;
-END$$
-DELIMITER ;
-
-DELIMITER $$
-CREATE TRIGGER check_retweet_id
-    BEFORE INSERT ON Tweets
-    FOR EACH ROW
-BEGIN
-    IF NEW.retweet_id IS NOT NULL AND
-       (SELECT COUNT(*) FROM Tweets WHERE tweet_id = NEW.retweet_id) = 0 THEN
-        CALL RaiseException();
-    END IF;
-END$$
-DELIMITER ;
