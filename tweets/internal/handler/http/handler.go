@@ -18,12 +18,19 @@ type Handler struct {
 	ctrl *controller.Controller
 }
 
+// TODO: rewrite Api following best practices
+
 func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
 }
 
 // Retrieve either by tweet id or user id
 func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodGet {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
 	err := req.ParseForm()
 	if err != nil {
 		// TODO: write more concise error to w
@@ -39,6 +46,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	// can retrieve both by user_id and tweet_id
 	if userOk {
 		userIds := make([]model.UserId, len(users))
 
@@ -58,7 +66,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		if err := json.NewEncoder(w).Encode(tweets); err != nil {
-			log.Printf("Response encode error: %v\n", err)
+			http.Error(w, "failed to encode tweets", http.StatusInternalServerError)
 		}
 	}
 	if tweetsOk {
@@ -80,7 +88,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		if err := json.NewEncoder(w).Encode(tweets); err != nil {
-			log.Printf("Response encode error: %v\n", err)
+			http.Error(w, "failed to encode tweets", http.StatusInternalServerError)
 		}
 	}
 }
