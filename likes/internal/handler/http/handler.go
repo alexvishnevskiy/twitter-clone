@@ -74,9 +74,12 @@ func (h *Handler) Unlike(w http.ResponseWriter, req *http.Request) {
 	userID := model.UserId(user)
 	err = h.ctrl.UnlikeTweet(req.Context(), userID, tweetID)
 	if err != nil {
-		http.Error(w, "failed to like a tweet", http.StatusInternalServerError)
+		http.Error(w, "failed to unlike a tweet", http.StatusInternalServerError)
 	}
 }
+
+// TODO: move everything to helper function
+// and call this function from these 2 functions
 
 func (h *Handler) GetUsersByTweet(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
