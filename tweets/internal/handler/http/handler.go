@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
-	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
 	"log"
 	"net/http"
 	"strconv"
@@ -48,7 +48,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 	}
 	// can retrieve both by user_id and tweet_id
 	if userOk {
-		userIds := make([]model.UserId, len(users))
+		userIds := make([]types.UserId, len(users))
 
 		for i, user := range users {
 			userId, err := strconv.Atoi(user)
@@ -57,7 +57,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			userIds[i] = model.UserId(userId)
+			userIds[i] = types.UserId(userId)
 		}
 		tweets, err := h.ctrl.RetrieveByUserID(req.Context(), userIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
@@ -70,7 +70,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if tweetsOk {
-		tweetIds := make([]model.TweetId, len(tweets))
+		tweetIds := make([]types.TweetId, len(tweets))
 
 		for i, tweet := range tweets {
 			tweetId, err := strconv.Atoi(tweet)
@@ -79,7 +79,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			tweetIds[i] = model.TweetId(tweetId)
+			tweetIds[i] = types.TweetId(tweetId)
 		}
 		tweets, err := h.ctrl.RetrieveByTweetID(req.Context(), tweetIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
@@ -107,7 +107,7 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tweetID := model.TweetId(tweet)
+	tweetID := types.TweetId(tweet)
 	err = h.ctrl.DeletePost(req.Context(), tweetID)
 	if err != nil {
 		// TODO: write more concise error to w
@@ -124,10 +124,10 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var (
-		userId    model.UserId
+		userId    types.UserId
 		content   string
 		mediaUrl  *string
-		retweetId *model.TweetId
+		retweetId *types.TweetId
 	)
 
 	user_id := req.FormValue("user_id")
@@ -144,7 +144,7 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("failed to parse user_id: %s", user_id), http.StatusBadRequest)
 		return
 	}
-	userId = model.UserId(user)
+	userId = types.UserId(user)
 
 	if media_url == "" {
 		mediaUrl = nil
@@ -156,7 +156,7 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("failed to parse retweet_id: %s", retweet_id), http.StatusBadRequest)
 		return
 	} else if retweet_id != "" {
-		retweet_id := model.TweetId(retweet)
+		retweet_id := types.TweetId(retweet)
 		retweetId = &retweet_id
 	} else {
 		retweetId = nil

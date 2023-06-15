@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/follow/internal/controller"
+	httphandler "github.com/alexvishnevskiy/twitter-clone/follow/internal/handler/http"
 	"github.com/alexvishnevskiy/twitter-clone/follow/internal/repository/mysql"
 	"log"
 	"net/http"

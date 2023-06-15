@@ -1,12 +1,13 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/likes/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/likes/internal/repository/mysql"
-	"github.com/alexvishnevskiy/twitter-clone/likes/pkg/model"
 	"net/http"
 	"strconv"
 )
@@ -14,6 +15,8 @@ import (
 type Handler struct {
 	ctrl *controller.Controller
 }
+
+type retrieveFunc func(context.Context, interface{}) ([]types.UserId, error)
 
 func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
@@ -42,8 +45,8 @@ func (h *Handler) Like(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tweetID := model.TweetId(tweet)
-	userID := model.UserId(user)
+	tweetID := types.TweetId(tweet)
+	userID := types.UserId(user)
 	err = h.ctrl.LikeTweet(req.Context(), userID, tweetID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to like a tweet: %s", err), http.StatusInternalServerError)
@@ -70,16 +73,13 @@ func (h *Handler) Unlike(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tweetID := model.TweetId(tweet)
-	userID := model.UserId(user)
+	tweetID := types.TweetId(tweet)
+	userID := types.UserId(user)
 	err = h.ctrl.UnlikeTweet(req.Context(), userID, tweetID)
 	if err != nil {
 		http.Error(w, "failed to unlike a tweet", http.StatusInternalServerError)
 	}
 }
-
-// TODO: move everything to helper function
-// and call this function from these 2 functions
 
 func (h *Handler) GetUsersByTweet(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
@@ -94,7 +94,7 @@ func (h *Handler) GetUsersByTweet(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tweetID := model.TweetId(tweet)
+	tweetID := types.TweetId(tweet)
 	users, err := h.ctrl.GetUsersByTweet(req.Context(), tweetID)
 
 	if err != nil && !errors.Is(err, mysql.ErrNotFound) {
@@ -123,7 +123,7 @@ func (h *Handler) GetTweetsByUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	userID := model.UserId(user)
+	userID := types.UserId(user)
 	tweets, err := h.ctrl.GetTweetsByUser(req.Context(), userID)
 
 	if err != nil && !errors.Is(err, mysql.ErrNotFound) {

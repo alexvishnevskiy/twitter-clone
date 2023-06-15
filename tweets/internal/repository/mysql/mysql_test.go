@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -24,7 +25,7 @@ func TestRepository_Put(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), "some content", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	_, err = repo.Put(ctx, model.UserId(1), "some content", nil, nil)
+	_, err = repo.Put(ctx, types.UserId(1), "some content", nil, nil)
 	if err != nil {
 		t.Errorf("error was not expected while inserting tweet: %s", err)
 	}
@@ -49,7 +50,7 @@ func TestRepository_DeletePost(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	// Call the Delete method
-	if err = repo.DeletePost(ctx, model.TweetId(1)); err != nil {
+	if err = repo.DeletePost(ctx, types.TweetId(1)); err != nil {
 		t.Errorf("error was not expected while deleting: %s", err)
 	}
 
@@ -71,10 +72,10 @@ func TestRepository_Get(t *testing.T) {
 	// what we want
 	curTime := time.Now()
 	mediaUrl := "url"
-	retweetId := model.TweetId(2)
+	retweetId := types.TweetId(2)
 	want := model.Tweet{
-		TweetId:   model.TweetId(1),
-		UserId:    model.UserId(1),
+		TweetId:   types.TweetId(1),
+		UserId:    types.UserId(1),
 		RetweetId: &retweetId,
 		MediaUrl:  &mediaUrl,
 		Content:   "content",
@@ -112,9 +113,9 @@ func TestRepository_Get(t *testing.T) {
 				// Call the get method
 				switch tc.name {
 				case "GetByTweet":
-					res, err = repo.GetByTweet(ctx, model.TweetId(1))
+					res, err = repo.GetByTweet(ctx, types.TweetId(1))
 				case "GetByUser":
-					res, err = repo.GetByUser(ctx, model.UserId(1))
+					res, err = repo.GetByUser(ctx, types.UserId(1))
 				}
 
 				if err != nil {

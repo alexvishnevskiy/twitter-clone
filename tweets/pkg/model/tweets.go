@@ -1,17 +1,15 @@
 package model
 
 import "time"
+import "github.com/alexvishnevskiy/twitter-clone/internal/types"
 
-type UserId int
-type TweetId int
-
-// tweets data model
+// tweets data types
 
 type Tweet struct {
-	UserId    UserId    `json:"user_id"`
-	TweetId   TweetId   `json:"tweet_id"`
-	RetweetId *TweetId  `json:"retweet_id"`
-	Content   string    `json:"content"`
-	MediaUrl  *string   `json:"media_url"`
-	CreatedAt time.Time `json:"created_at"`
+	UserId    types.UserId   `json:"user_id"`
+	TweetId   types.TweetId  `json:"tweet_id"`
+	RetweetId *types.TweetId `json:"retweet_id"`
+	Content   string         `json:"content"`
+	MediaUrl  *string        `json:"media_url"`
+	CreatedAt time.Time      `json:"created_at"`
 }

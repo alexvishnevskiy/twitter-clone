@@ -2,14 +2,14 @@ package controller
 
 import (
 	"context"
-	"github.com/alexvishnevskiy/twitter-clone/likes/pkg/model"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 )
 
 type likesRepository interface {
-	Like(ctx context.Context, userId model.UserId, tweetId model.TweetId) error
-	Unlike(ctx context.Context, userId model.UserId, tweetId model.TweetId) error
-	GetUsersByTweet(ctx context.Context, tweetId model.TweetId) ([]model.UserId, error)
-	GetTweetsByUser(ctx context.Context, userId model.UserId) ([]model.TweetId, error)
+	Like(ctx context.Context, userId types.UserId, tweetId types.TweetId) error
+	Unlike(ctx context.Context, userId types.UserId, tweetId types.TweetId) error
+	GetUsersByTweet(ctx context.Context, tweetId types.TweetId) ([]types.UserId, error)
+	GetTweetsByUser(ctx context.Context, userId types.UserId) ([]types.TweetId, error)
 }
 
 type Controller struct {
@@ -22,8 +22,8 @@ func New(repo likesRepository) *Controller {
 
 func (ctrl *Controller) LikeTweet(
 	ctx context.Context,
-	userId model.UserId,
-	tweetId model.TweetId,
+	userId types.UserId,
+	tweetId types.TweetId,
 ) error {
 	err := ctrl.repo.Like(ctx, userId, tweetId)
 	return err
@@ -31,8 +31,8 @@ func (ctrl *Controller) LikeTweet(
 
 func (ctrl *Controller) UnlikeTweet(
 	ctx context.Context,
-	userId model.UserId,
-	tweetId model.TweetId,
+	userId types.UserId,
+	tweetId types.TweetId,
 ) error {
 	err := ctrl.repo.Unlike(ctx, userId, tweetId)
 	return err
@@ -40,16 +40,16 @@ func (ctrl *Controller) UnlikeTweet(
 
 func (ctrl *Controller) GetUsersByTweet(
 	ctx context.Context,
-	tweetId model.TweetId,
-) ([]model.UserId, error) {
+	tweetId types.TweetId,
+) ([]types.UserId, error) {
 	users, err := ctrl.repo.GetUsersByTweet(ctx, tweetId)
 	return users, err
 }
 
 func (ctrl *Controller) GetTweetsByUser(
 	ctx context.Context,
-	userId model.UserId,
-) ([]model.TweetId, error) {
+	userId types.UserId,
+) ([]types.TweetId, error) {
 	tweets, err := ctrl.repo.GetTweetsByUser(ctx, userId)
 	return tweets, err
 }

@@ -1,10 +1,9 @@
 package model
 
-type UserId int
-type TweetId int
+import "github.com/alexvishnevskiy/twitter-clone/internal/types"
 
-// likes data model
+// likes data types
 type Like struct {
-	UserId  UserId  `json:"user_id"`
-	TweetId TweetId `json:"tweet_id"`
+	UserId  types.UserId  `json:"user_id"`
+	TweetId types.TweetId `json:"tweet_id"`
 }

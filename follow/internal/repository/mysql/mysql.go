@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/alexvishnevskiy/twitter-clone/follow/pkg/model"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Repository struct {
@@ -24,7 +25,7 @@ func New(driverName string, dataSourceName string) (*Repository, error) {
 	return &Repository{db}, nil
 }
 
-func (r *Repository) Follow(ctx context.Context, userId model.UserId, followId model.UserId) error {
+func (r *Repository) Follow(ctx context.Context, userId types.UserId, followId types.UserId) error {
 	row, err := r.db.ExecContext(
 		ctx,
 		"INSERT INTO Followers (user_id, following_id) VALUES (?, ?)", userId, followId,
@@ -40,7 +41,7 @@ func (r *Repository) Follow(ctx context.Context, userId model.UserId, followId m
 	return nil
 }
 
-func (r *Repository) Unfollow(ctx context.Context, userId model.UserId, followId model.UserId) error {
+func (r *Repository) Unfollow(ctx context.Context, userId types.UserId, followId types.UserId) error {
 	row, err := r.db.ExecContext(ctx, "DELETE FROM Followers WHERE user_id = ? AND following_id = ?", userId, followId)
 	if err != nil {
 		return err
@@ -53,13 +54,13 @@ func (r *Repository) Unfollow(ctx context.Context, userId model.UserId, followId
 	return nil
 }
 
-func get(ctx context.Context, r *Repository, userId model.UserId, retrieveType int) ([]model.UserId, error) {
+func get(ctx context.Context, r *Repository, userId types.UserId, retrieveType int) ([]types.UserId, error) {
 	var query string
 	switch retrieveType {
 	case 0:
-		query = "SELECT user_id FROM Followers WHERE user_id = ?"
+		query = "SELECT following_id FROM Followers WHERE user_id = ?"
 	case 1:
-		query = "SELECT following_id FROM Followers WHERE following_id = ?"
+		query = "SELECT user_id FROM Followers WHERE following_id = ?"
 	}
 	rows, err := r.db.QueryContext(ctx, query, userId)
 	if err != nil {
@@ -67,10 +68,10 @@ func get(ctx context.Context, r *Repository, userId model.UserId, retrieveType i
 	}
 	defer rows.Close()
 
-	var res []model.UserId
+	var res []types.UserId
 	// iterate over result
 	for rows.Next() {
-		var id model.UserId
+		var id types.UserId
 		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
@@ -82,12 +83,12 @@ func get(ctx context.Context, r *Repository, userId model.UserId, retrieveType i
 	return res, nil
 }
 
-func (r *Repository) GetUserFollowers(ctx context.Context, userId model.UserId) ([]model.UserId, error) {
+func (r *Repository) GetUserFollowers(ctx context.Context, userId types.UserId) ([]types.UserId, error) {
 	followers, err := get(ctx, r, userId, 0)
 	return followers, err
 }
 
-func (r *Repository) GetFollowingUser(ctx context.Context, userId model.UserId) ([]model.UserId, error) {
+func (r *Repository) GetFollowingUser(ctx context.Context, userId types.UserId) ([]types.UserId, error) {
 	followers, err := get(ctx, r, userId, 1)
 	return followers, err
 }

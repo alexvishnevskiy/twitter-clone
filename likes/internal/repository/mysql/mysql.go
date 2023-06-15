@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/alexvishnevskiy/twitter-clone/likes/pkg/model"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -28,7 +28,7 @@ func New(driverName string, dataSourceName string) (*Repository, error) {
 }
 
 // Like specific post
-func (r *Repository) Like(ctx context.Context, userId model.UserId, tweetId model.TweetId) error {
+func (r *Repository) Like(ctx context.Context, userId types.UserId, tweetId types.TweetId) error {
 	row, err := r.db.ExecContext(
 		ctx,
 		"INSERT INTO Likes (user_id, tweet_id) VALUES (?, ?)", userId, tweetId,
@@ -45,7 +45,7 @@ func (r *Repository) Like(ctx context.Context, userId model.UserId, tweetId mode
 }
 
 // Unlike specific post
-func (r *Repository) Unlike(ctx context.Context, userId model.UserId, tweetId model.TweetId) error {
+func (r *Repository) Unlike(ctx context.Context, userId types.UserId, tweetId types.TweetId) error {
 	row, err := r.db.ExecContext(ctx, "DELETE FROM Likes WHERE user_id = ? AND tweet_id = ?", userId, tweetId)
 	if err != nil {
 		return err
@@ -81,29 +81,29 @@ func get(ctx context.Context, r *Repository, colName string, idName string, id i
 	return res, nil
 }
 
-func (r *Repository) GetUsersByTweet(ctx context.Context, tweetId model.TweetId) ([]model.UserId, error) {
+func (r *Repository) GetUsersByTweet(ctx context.Context, tweetId types.TweetId) ([]types.UserId, error) {
 	users, err := get(ctx, r, "user_id", "tweet_id", tweetId)
 	if err != nil {
 		return nil, err
 	}
 
-	userIds := make([]model.UserId, len(users))
+	userIds := make([]types.UserId, len(users))
 	for i, v := range users {
-		id := model.UserId(v)
+		id := types.UserId(v)
 		userIds[i] = id
 	}
 	return userIds, nil
 }
 
-func (r *Repository) GetTweetsByUser(ctx context.Context, userId model.UserId) ([]model.TweetId, error) {
+func (r *Repository) GetTweetsByUser(ctx context.Context, userId types.UserId) ([]types.TweetId, error) {
 	tweets, err := get(ctx, r, "tweet_id", "user_id", userId)
 	if err != nil {
 		return nil, err
 	}
 
-	tweetIds := make([]model.TweetId, len(tweets))
+	tweetIds := make([]types.TweetId, len(tweets))
 	for i, v := range tweets {
-		id := model.TweetId(v)
+		id := types.TweetId(v)
 		tweetIds[i] = id
 	}
 	return tweetIds, nil

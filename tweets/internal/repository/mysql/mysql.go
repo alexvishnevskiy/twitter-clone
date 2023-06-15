@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
 	_ "github.com/go-sql-driver/mysql"
 	"strings"
@@ -35,11 +36,11 @@ func New(driverName string, dataSourceName string) (*Repository, error) {
 // Put new tweet to database
 func (r *Repository) Put(
 	ctx context.Context,
-	userId model.UserId,
+	userId types.UserId,
 	content string,
 	mediaUrl *string,
-	retweetId *model.TweetId,
-) (*model.TweetId, error) {
+	retweetId *types.TweetId,
+) (*types.TweetId, error) {
 	createdAt := time.Now()
 	row, err := r.db.ExecContext(
 		ctx,
@@ -50,7 +51,7 @@ func (r *Repository) Put(
 		return nil, err
 	}
 	id, err := row.LastInsertId()
-	tweetId := model.TweetId(id)
+	tweetId := types.TweetId(id)
 	return &tweetId, err
 }
 
@@ -92,7 +93,7 @@ func get(ctx context.Context, r *Repository, idName string, ids []interface{}) (
 }
 
 // GetByTweet Retrieve by tweet id
-func (r *Repository) GetByTweet(ctx context.Context, tweetIds ...model.TweetId) ([]model.Tweet, error) {
+func (r *Repository) GetByTweet(ctx context.Context, tweetIds ...types.TweetId) ([]model.Tweet, error) {
 	// TODO: probably add some filters
 	interfaceTweetIds := make([]interface{}, len(tweetIds))
 	for i, v := range tweetIds {
@@ -102,7 +103,7 @@ func (r *Repository) GetByTweet(ctx context.Context, tweetIds ...model.TweetId) 
 }
 
 // GetByUser Retieve by user id
-func (r *Repository) GetByUser(ctx context.Context, userIds ...model.UserId) ([]model.Tweet, error) {
+func (r *Repository) GetByUser(ctx context.Context, userIds ...types.UserId) ([]model.Tweet, error) {
 	// TODO: probably add some filters
 	interfaceTweetIds := make([]interface{}, len(userIds))
 	for i, v := range userIds {
@@ -112,7 +113,7 @@ func (r *Repository) GetByUser(ctx context.Context, userIds ...model.UserId) ([]
 }
 
 // DeletePost delete post by tweet id
-func (r *Repository) DeletePost(ctx context.Context, postId model.TweetId) error {
+func (r *Repository) DeletePost(ctx context.Context, postId types.TweetId) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM Tweets WHERE tweet_id = ?", postId)
 	return err
 }
