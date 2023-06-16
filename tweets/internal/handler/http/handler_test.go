@@ -1,15 +1,18 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	mock_controller "github.com/alexvishnevskiy/twitter-clone/gen/controller"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,8 +25,8 @@ func TestHandler_Delete(t *testing.T) {
 
 	// mock tweet controller
 	mockTweetRepo := mock_controller.NewMocktweetsRepository(mockCtrl)
-	mockTweetRepo.EXPECT().DeletePost(ctx, model.TweetId(1)).Return(nil)
-	mockTweetRepo.EXPECT().DeletePost(ctx, model.TweetId(2)).Return(errors.New(""))
+	mockTweetRepo.EXPECT().DeletePost(ctx, types.TweetId(1)).Return(nil)
+	mockTweetRepo.EXPECT().DeletePost(ctx, types.TweetId(2)).Return(errors.New(""))
 	tweetCtrl := controller.New(mockTweetRepo)
 	tweetHandler := New(tweetCtrl)
 
@@ -100,16 +103,25 @@ func TestHandler_Post(t *testing.T) {
 	tweetCtrl := controller.New(mockTweetRepo)
 	tweetHandler := New(tweetCtrl)
 
-	want := model.TweetId(1)
+	want := types.TweetId(1)
 	// mock tweet controller
 	mockTweetRepo.EXPECT().
-		Put(ctx, model.UserId(1), "content", nil, nil).
+		Put(ctx, types.UserId(1), "content", nil, nil).
 		Return(&want, nil)
 
-	req, err := http.NewRequest(
-		"POST",
-		fmt.Sprintf("/post_tweet?user_id=%d&content=%s", 1, "content"), nil,
+	// make json for body request
+	payloadBytes, err := json.Marshal(
+		struct {
+			UserId  string `json:"user_id"`
+			Content string `json:"content"`
+		}{"1", "content"},
 	)
+	if err != nil {
+		log.Fatalf("Failed to marshal payload: %v", err)
+	}
+	body := bytes.NewReader(payloadBytes)
+
+	req, err := http.NewRequest("POST", "/post_tweet", body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +136,7 @@ func TestHandler_Post(t *testing.T) {
 		)
 	}
 
-	var res *model.TweetId
+	var res *types.TweetId
 	decoder := json.NewDecoder(rr.Body)
 	err = decoder.Decode(&res)
 	if err != nil {
@@ -148,20 +160,20 @@ func TestHandler_Retrieve(t *testing.T) {
 	// expected output
 	want := []model.Tweet{
 		{
-			UserId:  model.UserId(3),
-			TweetId: model.TweetId(5),
+			UserId:  types.UserId(3),
+			TweetId: types.TweetId(5),
 			Content: "some content",
 		},
 		{
-			UserId:  model.UserId(7),
-			TweetId: model.TweetId(2),
+			UserId:  types.UserId(7),
+			TweetId: types.TweetId(2),
 			Content: "some content",
 		},
 	}
 
 	// expected behaviour
-	mockTweetRepo.EXPECT().GetByUser(ctx, model.UserId(1), model.UserId(2)).Return(want, nil)
-	mockTweetRepo.EXPECT().GetByTweet(ctx, model.TweetId(1), model.TweetId(2)).Return(want, nil)
+	mockTweetRepo.EXPECT().GetByUser(ctx, types.UserId(1), types.UserId(2)).Return(want, nil)
+	mockTweetRepo.EXPECT().GetByTweet(ctx, types.TweetId(1), types.TweetId(2)).Return(want, nil)
 
 	testCases := []struct {
 		name     string

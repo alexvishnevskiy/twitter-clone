@@ -6,6 +6,7 @@ package controller
 
 import (
 	context "context"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	reflect "reflect"
 
 	model "github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
@@ -36,7 +37,7 @@ func (m *MocktweetsRepository) EXPECT() *MocktweetsRepositoryMockRecorder {
 }
 
 // DeletePost mocks base method.
-func (m *MocktweetsRepository) DeletePost(ctx context.Context, postId model.TweetId) error {
+func (m *MocktweetsRepository) DeletePost(ctx context.Context, postId types.TweetId) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeletePost", ctx, postId)
 	ret0, _ := ret[0].(error)
@@ -50,7 +51,7 @@ func (mr *MocktweetsRepositoryMockRecorder) DeletePost(ctx, postId interface{}) 
 }
 
 // GetByTweet mocks base method.
-func (m *MocktweetsRepository) GetByTweet(ctx context.Context, tweetIds ...model.TweetId) ([]model.Tweet, error) {
+func (m *MocktweetsRepository) GetByTweet(ctx context.Context, tweetIds ...types.TweetId) ([]model.Tweet, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx}
 	for _, a := range tweetIds {
@@ -70,7 +71,7 @@ func (mr *MocktweetsRepositoryMockRecorder) GetByTweet(ctx interface{}, tweetIds
 }
 
 // GetByUser mocks base method.
-func (m *MocktweetsRepository) GetByUser(ctx context.Context, userIds ...model.UserId) ([]model.Tweet, error) {
+func (m *MocktweetsRepository) GetByUser(ctx context.Context, userIds ...types.UserId) ([]model.Tweet, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx}
 	for _, a := range userIds {
@@ -90,10 +91,10 @@ func (mr *MocktweetsRepositoryMockRecorder) GetByUser(ctx interface{}, userIds .
 }
 
 // Put mocks base method.
-func (m *MocktweetsRepository) Put(ctx context.Context, userId model.UserId, content string, mediaUrl *string, retweetId *model.TweetId) (*model.TweetId, error) {
+func (m *MocktweetsRepository) Put(ctx context.Context, userId types.UserId, content string, mediaUrl *string, retweetId *types.TweetId) (*types.TweetId, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Put", ctx, userId, content, mediaUrl, retweetId)
-	ret0, _ := ret[0].(*model.TweetId)
+	ret0, _ := ret[0].(*types.TweetId)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

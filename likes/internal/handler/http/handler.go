@@ -1,13 +1,13 @@
 package http
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/likes/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/likes/internal/repository/mysql"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -16,32 +16,50 @@ type Handler struct {
 	ctrl *controller.Controller
 }
 
-type retrieveFunc func(context.Context, interface{}) ([]types.UserId, error)
+// Define the structure of the request body data.
+type PostRequest struct {
+	UserId  string `json:"user_id"`
+	TweetId string `json:"tweet_id"`
+}
 
 func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
 }
-
-// TODO: refactor, move out common functions
-// TODO: rewrite Api following best practices
 
 func (h *Handler) Like(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
+	var requestData PostRequest
 
-	req_tweet := req.FormValue("tweet_id")
-	tweet, err := strconv.Atoi(req_tweet)
+	bodyBytes, err := ioutil.ReadAll(req.Body)
+	defer req.Body.Close()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("tweet_id is invalid: %s", req_tweet), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	req_user := req.FormValue("user_id")
-	user, err := strconv.Atoi(req_user)
+	err = json.Unmarshal(bodyBytes, &requestData)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("user_id is invalid: %s", req_user), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if requestData.UserId == "" && requestData.TweetId == "" {
+		http.Error(w, "user_id and tweet_id are empty", http.StatusBadRequest)
+		return
+	}
+
+	tweet, err := strconv.Atoi(requestData.TweetId)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to parse tweet_id: %s", requestData.TweetId), http.StatusBadRequest)
+		return
+	}
+
+	user, err := strconv.Atoi(requestData.UserId)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to parse user_id: %s", requestData.UserId), http.StatusBadRequest)
 		return
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,7 +19,13 @@ type Handler struct {
 	ctrl *controller.Controller
 }
 
-// TODO: rewrite Api following best practices
+// Define the structure of the request body data.
+type PostRequest struct {
+	UserId    string  `json:"user_id"`
+	Content   string  `json:"content"`
+	MediaUrl  *string `json:"media_url"`  // optional
+	RetweetId *string `json:"retweet_id"` // optional
+}
 
 func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
@@ -116,7 +123,6 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Post tweet
 func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -124,45 +130,51 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var (
-		userId    types.UserId
-		content   string
-		mediaUrl  *string
-		retweetId *types.TweetId
+		requestData PostRequest
+		retweetId   *types.TweetId = nil
 	)
 
-	user_id := req.FormValue("user_id")
-	content = req.FormValue("content")
-	media_url := req.FormValue("media_url")   // optional
-	retweet_id := req.FormValue("retweet_id") //optional
+	bodyBytes, err := ioutil.ReadAll(req.Body)
+	defer req.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	if user_id == "" && content == "" {
+	err = json.Unmarshal(bodyBytes, &requestData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if requestData.UserId == "" && requestData.Content == "" {
 		http.Error(w, "user_id and content are empty", http.StatusBadRequest)
 		return
 	}
-	user, err := strconv.Atoi(user_id)
+
+	userId, err := strconv.Atoi(requestData.UserId)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to parse user_id: %s", user_id), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to parse user_id: %s", requestData.UserId), http.StatusBadRequest)
 		return
 	}
-	userId = types.UserId(user)
 
-	if media_url == "" {
-		mediaUrl = nil
-	} else {
-		mediaUrl = &media_url
+	if requestData.RetweetId != nil {
+		tweetId, err := strconv.Atoi(*requestData.RetweetId)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to parse retweetId: %d", requestData.RetweetId), http.StatusBadRequest)
+			return
+		}
+		tweet := types.TweetId(tweetId)
+		retweetId = &tweet
 	}
-
-	if retweet, err := strconv.Atoi(retweet_id); retweet_id != "" && err != nil {
-		http.Error(w, fmt.Sprintf("failed to parse retweet_id: %s", retweet_id), http.StatusBadRequest)
-		return
-	} else if retweet_id != "" {
-		retweet_id := types.TweetId(retweet)
-		retweetId = &retweet_id
-	} else {
-		retweetId = nil
-	}
-
-	tweetId, err := h.ctrl.PostNewTweet(req.Context(), userId, content, mediaUrl, retweetId)
+	// Assuming you have a matching function PostNewTweet in your ctrl:
+	tweetId, err := h.ctrl.PostNewTweet(
+		req.Context(),
+		types.UserId(userId),
+		requestData.Content,
+		requestData.MediaUrl,
+		retweetId,
+	)
 	if err != nil {
 		http.Error(w, "failed to post tweet", http.StatusBadRequest)
 	}
