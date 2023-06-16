@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	mock_controller "github.com/alexvishnevskiy/twitter-clone/gen/controller"
+	mock_controller "github.com/alexvishnevskiy/twitter-clone/gen/controller/tweets"
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"

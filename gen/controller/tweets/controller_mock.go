@@ -2,7 +2,7 @@
 // Source: tweets/internal/controller/controller.go
 
 // Package controller is a generated GoMock package.
-package controller
+package tweets
 
 import (
 	context "context"
