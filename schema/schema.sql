@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS Tweets (
     media_url VARCHAR(50) NULL,
     created_at TIMESTAMP NOT NULL,
     PRIMARY KEY (tweet_id),
+    UNIQUE (user_id, retweet_id, content, media_url),
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
     FOREIGN KEY (retweet_id) REFERENCES Tweets(tweet_id) ON DELETE CASCADE
 );
