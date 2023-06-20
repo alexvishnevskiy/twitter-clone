@@ -1,0 +1,51 @@
+package http
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
+	"net/http"
+	"net/url"
+	"path"
+	"strconv"
+)
+
+type Gateway struct {
+	Url string
+}
+
+func New(url string) *Gateway {
+	return &Gateway{url}
+}
+
+func (g *Gateway) GetUsers(ctx context.Context, userId types.UserId) ([]types.UserId, error) {
+	base, _ := url.Parse(g.Url)
+	newURL, _ := url.Parse(path.Join(base.Path, "/user_followers"))
+	base = base.ResolveReference(newURL)
+	g.Url = base.String()
+
+	req, err := http.NewRequest(http.MethodGet, g.Url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+	values := req.URL.Query()
+	values.Add("user_id", strconv.Itoa(int(userId)))
+	req.URL.RawQuery = values.Encode()
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode/100 != 2 {
+		return nil, fmt.Errorf("non-2xx response: %v", resp)
+	}
+	var users []types.UserId
+	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
