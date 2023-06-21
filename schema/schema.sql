@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS Tweets (
     user_id INT NOT NULL,
     retweet_id INT NULL,
     content VARCHAR(500) NOT NULL,
-    media_url VARCHAR(50) NULL,
+    media_url VARCHAR(100) NULL,
     created_at TIMESTAMP NOT NULL,
     PRIMARY KEY (tweet_id),
     UNIQUE (user_id, retweet_id, content, media_url),

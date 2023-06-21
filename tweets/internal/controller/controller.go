@@ -34,6 +34,7 @@ func (ctrl *Controller) PostNewTweet(
 	mediaUrl *string,
 	retweetId *types.TweetId,
 ) (*types.TweetId, error) {
+	// TODO: write logic to save image to storage -> generate string, store in MySQL
 	tweetId, err := ctrl.repo.Put(ctx, userId, content, mediaUrl, retweetId)
 	return tweetId, err
 }

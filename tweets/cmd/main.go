@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/storage/local"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	httphandler "github.com/alexvishnevskiy/twitter-clone/tweets/internal/handler/http"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
@@ -23,7 +24,8 @@ func main() {
 	}
 
 	ctrl := controller.New(repository)
-	h := httphandler.New(ctrl)
+	storage := local.New("/Users/alexander/Downloads/tweets/")
+	h := httphandler.New(ctrl, storage)
 	http.Handle("/post_tweet", http.HandlerFunc(h.Post))
 	http.Handle("/retrieve_tweet", http.HandlerFunc(h.Retrieve))
 	http.Handle("/delete_tweet", http.HandlerFunc(h.Delete))

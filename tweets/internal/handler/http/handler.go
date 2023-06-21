@@ -6,29 +6,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/storage"
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
-	"io/ioutil"
+	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type Handler struct {
-	ctrl *controller.Controller
+	ctrl    *controller.Controller
+	storage storage.Storage
 }
 
-// Define the structure of the request body data.
-type PostRequest struct {
-	UserId    string  `json:"user_id"`
-	Content   string  `json:"content"`
-	MediaUrl  *string `json:"media_url"`  // optional
-	RetweetId *string `json:"retweet_id"` // optional
-}
-
-func New(ctrl *controller.Controller) *Handler {
-	return &Handler{ctrl}
+func New(ctrl *controller.Controller, storage storage.Storage) *Handler {
+	return &Handler{ctrl, storage}
 }
 
 // Retrieve either by tweet id or user id
@@ -40,16 +35,17 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 
 	err := req.ParseForm()
 	if err != nil {
-		// TODO: write more concise error to w
+		//TODO: write more concise error to w
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	var tweetsData []model.Tweet
 	users, userOk := req.Form["user_id"]
 	tweets, tweetsOk := req.Form["tweet_id"]
 
 	if !userOk && !tweetsOk {
-		// TODO: write more concise error to w
+		//TODO: write more concise error to w
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -60,20 +56,17 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		for i, user := range users {
 			userId, err := strconv.Atoi(user)
 			if err != nil {
-				// TODO: write more concise error to w
+				//TODO: write more concise error to w
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 			userIds[i] = types.UserId(userId)
 		}
-		tweets, err := h.ctrl.RetrieveByUserID(req.Context(), userIds...)
+		tweetsData, err = h.ctrl.RetrieveByUserID(req.Context(), userIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
-			// TODO: write more concise error to w
+			//TODO: write more concise error to w
 			w.WriteHeader(http.StatusNotFound)
 			return
-		}
-		if err := json.NewEncoder(w).Encode(tweets); err != nil {
-			http.Error(w, "failed to encode tweets", http.StatusInternalServerError)
 		}
 	}
 	if tweetsOk {
@@ -88,16 +81,39 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 			}
 			tweetIds[i] = types.TweetId(tweetId)
 		}
-		tweets, err := h.ctrl.RetrieveByTweetID(req.Context(), tweetIds...)
+		tweetsData, err = h.ctrl.RetrieveByTweetID(req.Context(), tweetIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
 			// TODO: write more concise error to w
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		if err := json.NewEncoder(w).Encode(tweets); err != nil {
-			http.Error(w, "failed to encode tweets", http.StatusInternalServerError)
-		}
 	}
+
+	response := make(
+		[]struct {
+			Media     string    `json:"media"`
+			Content   string    `json:"content"`
+			CreatedAt time.Time `json:"created_at"`
+		}, len(tweetsData),
+	)
+
+	// converting to response object
+	for i, tweet := range tweetsData {
+		media, _ := h.storage.ConvertImageFromStorage(*tweet.MediaUrl)
+		response[i].Content = tweet.Content
+		response[i].CreatedAt = tweet.CreatedAt
+		response[i].Media = media
+	}
+
+	jsonData, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Could not convert data to JSON", http.StatusInternalServerError)
+		return
+	}
+	// Set the content type header.
+	w.Header().Set("Content-Type", "application/json")
+	// Write the JSON data to the response.
+	w.Write(jsonData)
 }
 
 // Delete by tweet id
@@ -128,55 +144,69 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
+	// 1 << 16 is the maximum size you can read from the request
+	req.ParseMultipartForm(1 << 16)
 
 	var (
-		requestData PostRequest
-		retweetId   *types.TweetId = nil
+		retweetId *types.TweetId = nil
+		MediaUrl  *string        = nil
 	)
 
-	bodyBytes, err := ioutil.ReadAll(req.Body)
-	defer req.Body.Close()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	UserId := req.FormValue("user_id")
+	Content := req.FormValue("content")
+	RetweetId := req.FormValue("retweet_id")
 
-	err = json.Unmarshal(bodyBytes, &requestData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if requestData.UserId == "" && requestData.Content == "" {
+	if UserId == "" && Content == "" {
 		http.Error(w, "user_id and content are empty", http.StatusBadRequest)
 		return
 	}
 
-	userId, err := strconv.Atoi(requestData.UserId)
+	userId, err := strconv.Atoi(UserId)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to parse user_id: %s", requestData.UserId), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to parse user_id: %s", UserId), http.StatusBadRequest)
 		return
 	}
 
-	if requestData.RetweetId != nil {
-		tweetId, err := strconv.Atoi(*requestData.RetweetId)
+	if RetweetId != "" {
+		tweetId, err := strconv.Atoi(RetweetId)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to parse retweetId: %d", requestData.RetweetId), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("failed to parse retweetId: %d", RetweetId), http.StatusBadRequest)
 			return
 		}
 		tweet := types.TweetId(tweetId)
 		retweetId = &tweet
 	}
+
+	file, handler, err := req.FormFile("media")
+	if err != nil && err != http.ErrMissingFile {
+		http.Error(w, "Error retrieving media", http.StatusInternalServerError)
+		return
+	} else if err == nil {
+		url, err := h.storage.SaveImageFromRequest(file, handler)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error uploading media:%s", err), http.StatusInternalServerError)
+			return
+		}
+		MediaUrl = &url
+		defer file.Close()
+	}
+
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error uploading file to the server: %s", err), http.StatusInternalServerError)
+		return
+	}
+
 	// Assuming you have a matching function PostNewTweet in your ctrl:
 	tweetId, err := h.ctrl.PostNewTweet(
 		req.Context(),
 		types.UserId(userId),
-		requestData.Content,
-		requestData.MediaUrl,
+		Content,
+		MediaUrl,
 		retweetId,
 	)
+
 	if err != nil {
-		http.Error(w, "failed to post tweet", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to post tweet: %s", err), http.StatusBadRequest)
 	}
 	if err := json.NewEncoder(w).Encode(tweetId); err != nil {
 		http.Error(w, "response encode error", http.StatusInternalServerError)
