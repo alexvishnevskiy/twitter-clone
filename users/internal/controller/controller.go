@@ -40,7 +40,7 @@ func New(repo usersRepository) *Controller {
 
 func encodePassword(password string) string {
 	// TODO: replace with decode algorithm
-	return objx.HashWithKey(password, "password")
+	return objx.HashWithKey(password, "password")[:5]
 }
 
 func checkPassword(enteredPassword string, databasePassword string) bool {

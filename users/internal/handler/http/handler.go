@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/jwt"
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/users/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/users/pkg/model"
@@ -48,11 +49,26 @@ func (h *Handler) Register(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to register user: %s", err), http.StatusInternalServerError)
 	}
+
+	token, err := jwt.GenerateJWT()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to generate jwt: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(
+		w, &http.Cookie{
+			Name:  "token",
+			Value: token,
+		},
+	)
 }
 
 func (h *Handler) Login(w http.ResponseWriter, req *http.Request) {
-	// TODO: add jwt token
-	// TODO: check which http request should be
+	if req.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
 	email := req.FormValue("email")
 	password := req.FormValue("password")
 	err := h.ctrl.Login(req.Context(), email, password)
@@ -60,6 +76,19 @@ func (h *Handler) Login(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("Invalid email or password: %s", err), http.StatusForbidden)
 		return
 	}
+
+	token, err := jwt.GenerateJWT()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to generate jwt: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(
+		w, &http.Cookie{
+			Name:  "token",
+			Value: token,
+		},
+	)
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {

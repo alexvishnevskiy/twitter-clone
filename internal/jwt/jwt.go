@@ -1,0 +1,81 @@
+package jwt
+
+import (
+	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/types"
+	"github.com/dgrijalva/jwt-go"
+	"net/http"
+	"strings"
+	"time"
+)
+
+var jwtKey = []byte("my_secret_key")
+
+type Claims struct {
+	UserId types.UserId `json:"user_id"`
+	jwt.StandardClaims
+}
+
+// TODO: add claims to check for specific user_id
+
+func GenerateJWT(id types.UserId) (string, error) {
+	var err error
+
+	// Create the Claims
+	claims := &Claims{
+		UserId: id,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+			Issuer:    "test",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+
+	if err != nil {
+		fmt.Errorf("something went wrong: %s", err.Error())
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func ValidateMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+
+			// Get the JWT string from the header
+			tokenString := r.Header.Get("Authorization")
+
+			// Check if the token is empty
+			if tokenString == "" {
+				http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
+				return
+			}
+
+			// The token always starts with "Bearer "
+			// we need to remove this part in order to be able to parse the token correctly
+			tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+			// Parse the token
+			claims := &jwt.StandardClaims{}
+			token, err := jwt.ParseWithClaims(
+				tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+					return jwtKey, nil
+				},
+			)
+
+			// If the token is invalid or expired, respond with an error
+			if err != nil || !token.Valid {
+				http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+				return
+			}
+
+			// If everything is OK, call the next handler
+			next.ServeHTTP(w, r)
+		},
+	)
+}
+
+// TODO: redirect to login if it expires

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/alexvishnevskiy/twitter-clone/internal/jwt"
 	"github.com/alexvishnevskiy/twitter-clone/users/internal/controller"
 	httphandler "github.com/alexvishnevskiy/twitter-clone/users/internal/handler/http"
 	"github.com/alexvishnevskiy/twitter-clone/users/internal/repository/mysql"
@@ -24,11 +25,13 @@ func main() {
 	ctrl := controller.New(repo)
 	h := httphandler.New(ctrl)
 
+	updateHandler := jwt.ValidateMiddleware(http.HandlerFunc(h.Update))
+	deleteHandler := jwt.ValidateMiddleware(http.HandlerFunc(h.Delete))
+
 	http.Handle("/login", http.HandlerFunc(h.Login))
-	http.Handle("/update", http.HandlerFunc(h.Update))
 	http.Handle("/register", http.HandlerFunc(h.Register))
-	http.Handle("/delete", http.HandlerFunc(h.Delete))
-	
+	http.Handle("/update", updateHandler)
+	http.Handle("/delete", deleteHandler)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		panic(err)
 	}
