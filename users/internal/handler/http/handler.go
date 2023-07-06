@@ -45,12 +45,14 @@ func (h *Handler) Register(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("all fields should be present for User struct"), http.StatusBadRequest)
 		return
 	}
-	err = h.ctrl.Register(req.Context(), requestData)
+
+	// register user
+	id, err := h.ctrl.Register(req.Context(), requestData)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to register user: %s", err), http.StatusInternalServerError)
 	}
 
-	token, err := jwt.GenerateJWT()
+	token, err := jwt.GenerateJWT(id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to generate jwt: %s", err), http.StatusInternalServerError)
 		return
@@ -69,15 +71,32 @@ func (h *Handler) Login(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
-	email := req.FormValue("email")
-	password := req.FormValue("password")
-	err := h.ctrl.Login(req.Context(), email, password)
+
+	var requestData struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	bodyBytes, err := ioutil.ReadAll(req.Body)
+	defer req.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// retrieve all data
+	err = json.Unmarshal(bodyBytes, &requestData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	userId, err := h.ctrl.Login(req.Context(), requestData.Email, requestData.Password)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid email or password: %s", err), http.StatusForbidden)
 		return
 	}
 
-	token, err := jwt.GenerateJWT()
+	token, err := jwt.GenerateJWT(userId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to generate jwt: %s", err), http.StatusInternalServerError)
 		return

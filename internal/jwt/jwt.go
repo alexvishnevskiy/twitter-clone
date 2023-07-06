@@ -5,6 +5,7 @@ import (
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -15,8 +16,6 @@ type Claims struct {
 	UserId types.UserId `json:"user_id"`
 	jwt.StandardClaims
 }
-
-// TODO: add claims to check for specific user_id
 
 func GenerateJWT(id types.UserId) (string, error) {
 	var err error
@@ -44,6 +43,12 @@ func GenerateJWT(id types.UserId) (string, error) {
 func ValidateMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			user, err := strconv.Atoi(r.FormValue("user_id"))
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			userID := types.UserId(user)
 
 			// Get the JWT string from the header
 			tokenString := r.Header.Get("Authorization")
@@ -59,7 +64,7 @@ func ValidateMiddleware(next http.Handler) http.Handler {
 			tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 
 			// Parse the token
-			claims := &jwt.StandardClaims{}
+			claims := &Claims{}
 			token, err := jwt.ParseWithClaims(
 				tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 					return jwtKey, nil
@@ -69,6 +74,11 @@ func ValidateMiddleware(next http.Handler) http.Handler {
 			// If the token is invalid or expired, respond with an error
 			if err != nil || !token.Valid {
 				http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+				return
+			}
+
+			if claims.UserId != userID {
+				http.Error(w, "Invalid user_id", http.StatusUnauthorized)
 				return
 			}
 

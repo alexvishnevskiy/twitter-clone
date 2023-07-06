@@ -15,11 +15,11 @@ type usersRepository interface {
 		firstname string,
 		lastname string,
 		email string,
-		password string) error
+		password string) (types.UserId, error)
 	RetrievePassword(
 		ctx context.Context,
 		email string,
-	) (string, error)
+	) (types.UserId, string, error)
 	Delete(
 		ctx context.Context,
 		userid types.UserId,
@@ -51,25 +51,25 @@ func checkPassword(enteredPassword string, databasePassword string) bool {
 func (ctrl *Controller) Register(
 	ctx context.Context,
 	userData model.User,
-) error {
+) (types.UserId, error) {
 	decodedPassword := encodePassword(userData.Password)
-	err := ctrl.repo.Register(
+	id, err := ctrl.repo.Register(
 		ctx, userData.Nickname, userData.FirstName, userData.LastName, userData.Email, decodedPassword,
 	)
-	return err
+	return id, err
 }
 
-func (ctrl *Controller) Login(ctx context.Context, email string, password string) error {
-	databasePassword, err := ctrl.repo.RetrievePassword(ctx, email)
+func (ctrl *Controller) Login(ctx context.Context, email string, password string) (types.UserId, error) {
+	userId, databasePassword, err := ctrl.repo.RetrievePassword(ctx, email)
 	if err != nil {
-		return err
+		return types.UserId(0), err
 	}
 
 	check := checkPassword(password, databasePassword)
 	if check {
-		return nil
+		return userId, nil
 	}
-	return fmt.Errorf("password is incorrect")
+	return types.UserId(0), fmt.Errorf("password is incorrect")
 }
 
 func (ctrl *Controller) Delete(ctx context.Context, userid types.UserId) error {

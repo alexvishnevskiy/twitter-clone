@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/users/pkg/model"
@@ -35,33 +36,42 @@ func (r *Repository) Register(
 	lastname string,
 	email string,
 	password string,
-) error {
-	_, err := r.db.ExecContext(
+) (types.UserId, error) {
+	row, err := r.db.ExecContext(
 		ctx,
 		"INSERT INTO User (nickname, first_name, last_name, email, password) VALUES (?, ?, ?, ?, ?)",
 		nickname, firstname, lastname, email, password,
 	)
-	return err
+	id, err := row.LastInsertId()
+	userId := types.UserId(id)
+	return userId, err
 }
 
 // outputs password for email address
 func (r *Repository) RetrievePassword(
 	ctx context.Context,
 	email string,
-) (string, error) {
-	var password string
-	rows, err := r.db.QueryContext(ctx, "SELECT password FROM User WHERE email = ?", email)
+) (types.UserId, string, error) {
+	var (
+		userId   types.UserId
+		password string
+	)
+
+	rows, err := r.db.QueryContext(ctx, "SELECT user_id, password FROM User WHERE email = ?", email)
 	if err != nil {
-		return "", err
+		return userId, "", err
 	}
 	defer rows.Close()
 
-	rows.Next()
-	err = rows.Scan(&password)
-	if err != nil {
-		return "", err
+	if rows.Next() {
+		err = rows.Scan(&userId, &password)
+		if err != nil {
+			return userId, "", err
+		}
+		return userId, password, nil
+	} else {
+		return userId, "", errors.New("No user found with given email")
 	}
-	return password, nil
 }
 
 func (r *Repository) Delete(
