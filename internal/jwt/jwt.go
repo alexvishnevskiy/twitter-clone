@@ -71,7 +71,12 @@ func ValidateMiddleware(next http.Handler) http.Handler {
 				},
 			)
 
-			// If the token is invalid or expired, respond with an error
+			// If the token is expited, redirect to /login
+			ve, ok := err.(*jwt.ValidationError)
+			if ok && (ve.Errors&jwt.ValidationErrorExpired != 0) {
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				return
+			}
 			if err != nil || !token.Valid {
 				http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 				return
@@ -87,5 +92,3 @@ func ValidateMiddleware(next http.Handler) http.Handler {
 		},
 	)
 }
-
-// TODO: redirect to login if it expires
