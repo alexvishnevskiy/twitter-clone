@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/alexvishnevskiy/twitter-clone/internal/storage"
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
@@ -14,16 +13,14 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type Handler struct {
-	ctrl    *controller.Controller
-	storage storage.Storage
+	ctrl *controller.Controller
 }
 
-func New(ctrl *controller.Controller, storage storage.Storage) *Handler {
-	return &Handler{ctrl, storage}
+func New(ctrl *controller.Controller) *Handler {
+	return &Handler{ctrl}
 }
 
 // Retrieve either by tweet id or user id
@@ -40,7 +37,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var tweetsData []model.Tweet
+	var tweetsData []model.Media
 	users, userOk := req.Form["user_id"]
 	tweets, tweetsOk := req.Form["tweet_id"]
 
@@ -89,23 +86,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	response := make(
-		[]struct {
-			Media     string    `json:"media"`
-			Content   string    `json:"content"`
-			CreatedAt time.Time `json:"created_at"`
-		}, len(tweetsData),
-	)
-
-	// converting to response object
-	for i, tweet := range tweetsData {
-		media, _ := h.storage.ConvertImageFromStorage(*tweet.MediaUrl)
-		response[i].Content = tweet.Content
-		response[i].CreatedAt = tweet.CreatedAt
-		response[i].Media = media
-	}
-
-	jsonData, err := json.Marshal(response)
+	jsonData, err := json.Marshal(tweetsData)
 	if err != nil {
 		http.Error(w, "Could not convert data to JSON", http.StatusInternalServerError)
 		return
@@ -147,10 +128,7 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	// 1 << 16 is the maximum size you can read from the request
 	req.ParseMultipartForm(1 << 16)
 
-	var (
-		retweetId *types.TweetId = nil
-		MediaUrl  *string        = nil
-	)
+	var retweetId *types.TweetId = nil
 
 	UserId := req.FormValue("user_id")
 	Content := req.FormValue("content")
@@ -181,27 +159,18 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	if err != nil && err != http.ErrMissingFile {
 		http.Error(w, "Error retrieving media", http.StatusInternalServerError)
 		return
-	} else if err == nil {
-		url, err := h.storage.SaveImageFromRequest(file, handler)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Error uploading media:%s", err), http.StatusInternalServerError)
-			return
-		}
-		MediaUrl = &url
-		defer file.Close()
-	}
-
-	if err != nil {
+	} else if err != nil {
 		http.Error(w, fmt.Sprintf("Error uploading file to the server: %s", err), http.StatusInternalServerError)
 		return
 	}
+	defer file.Close()
 
-	// Assuming you have a matching function PostNewTweet in your ctrl:
 	tweetId, err := h.ctrl.PostNewTweet(
 		req.Context(),
+		file,
+		handler,
 		types.UserId(userId),
 		Content,
-		MediaUrl,
 		retweetId,
 	)
 

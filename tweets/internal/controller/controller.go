@@ -2,8 +2,10 @@ package controller
 
 import (
 	"context"
+	"github.com/alexvishnevskiy/twitter-clone/internal/storage"
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
+	"mime/multipart"
 )
 
 // defines abstract methods for business logic (ex. handling requests to database)
@@ -18,39 +20,86 @@ type tweetsRepository interface {
 
 // controller for tweets
 type Controller struct {
-	repo tweetsRepository
-	// TODO: probably there will be message queue
+	repo    tweetsRepository
+	storage storage.Storage
 }
 
 // Creates new tweets controller
-func New(repo tweetsRepository) *Controller {
-	return &Controller{repo}
+func New(repo tweetsRepository, storage storage.Storage) *Controller {
+	return &Controller{repo, storage}
 }
 
 func (ctrl *Controller) PostNewTweet(
 	ctx context.Context,
+	file multipart.File,
+	handler *multipart.FileHeader,
 	userId types.UserId,
 	content string,
-	mediaUrl *string,
 	retweetId *types.TweetId,
 ) (*types.TweetId, error) {
-	// TODO: write logic to save image to storage -> generate string, store in MySQL
-	tweetId, err := ctrl.repo.Put(ctx, userId, content, mediaUrl, retweetId)
+	// save to storage
+	url, err := ctrl.storage.SaveImageFromRequest(file, handler)
+	if err != nil {
+		return nil, err
+	}
+
+	// save to db
+	MediaUrl := &url
+	tweetId, err := ctrl.repo.Put(ctx, userId, content, MediaUrl, retweetId)
 	return tweetId, err
 }
 
-func (ctrl *Controller) RetrieveByTweetID(ctx context.Context, tweetIds ...types.TweetId) ([]model.Tweet, error) {
+func (ctrl *Controller) RetrieveByTweetID(ctx context.Context, tweetIds ...types.TweetId) ([]model.Media, error) {
 	tweets, err := ctrl.repo.GetByTweet(ctx, tweetIds...)
-	return tweets, err
+	if err != nil {
+		return nil, err
+	}
+
+	tweetsMedia := make([]model.Media, len(tweets))
+	// converting to response object
+	for i, tweet := range tweets {
+		media, _ := ctrl.storage.ConvertImageFromStorage(*tweet.MediaUrl)
+		tweetsMedia[i].Content = tweet.Content
+		tweetsMedia[i].CreatedAt = tweet.CreatedAt
+		tweetsMedia[i].Media = media
+	}
+	return tweetsMedia, err
 }
 
-func (ctrl *Controller) RetrieveByUserID(ctx context.Context, userIds ...types.UserId) ([]model.Tweet, error) {
+func (ctrl *Controller) RetrieveByUserID(ctx context.Context, userIds ...types.UserId) ([]model.Media, error) {
 	tweets, err := ctrl.repo.GetByUser(ctx, userIds...)
-	return tweets, err
+	if err != nil {
+		return nil, err
+	}
+
+	var media string = ""
+	tweetsMedia := make([]model.Media, len(tweets))
+	// converting to response object
+	for i, tweet := range tweets {
+		if tweet.MediaUrl != nil {
+			media, _ = ctrl.storage.ConvertImageFromStorage(*tweet.MediaUrl)
+		}
+
+		tweetsMedia[i].Content = tweet.Content
+		tweetsMedia[i].CreatedAt = tweet.CreatedAt
+		tweetsMedia[i].Media = media
+	}
+	return tweetsMedia, err
 }
 
 func (ctrl *Controller) DeletePost(ctx context.Context, postId types.TweetId) error {
-	err := ctrl.repo.DeletePost(ctx, postId)
+	// get media url
+	tweetData, err := ctrl.repo.GetByTweet(ctx, postId)
+	if err != nil {
+		return err
+	}
+	// delete from db
+	err = ctrl.repo.DeletePost(ctx, postId)
+	if err != nil {
+		return err
+	}
+	// delete from storage
+	err = ctrl.storage.Delete(*tweetData[0].MediaUrl)
 	return err
 }
 

@@ -18,6 +18,8 @@ import (
 	"testing"
 )
 
+// TODO: add storage
+
 func TestHandler_Delete(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)

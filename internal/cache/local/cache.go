@@ -26,15 +26,15 @@ func New(capacity int) *LRUCache {
 	}
 }
 
-func (lru *LRUCache) Get(key string) []byte {
+func (lru *LRUCache) Get(key string) (bool, []byte) {
 	lru.mutex.RLock()
 	defer lru.mutex.RUnlock()
 
 	if element, ok := lru.cache[key]; ok {
 		lru.items.MoveToFront(element)
-		return element.Value.(*pair).value
+		return true, element.Value.(*pair).value
 	}
-	return []byte{}
+	return false, []byte{}
 }
 
 func (lru *LRUCache) Put(key string, value []byte) {

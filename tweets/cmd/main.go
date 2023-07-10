@@ -23,9 +23,9 @@ func main() {
 		log.Printf("Error: %v\n", err)
 	}
 
-	ctrl := controller.New(repository)
 	storage := local.New("/Users/alexander/Downloads/tweets/")
-	h := httphandler.New(ctrl, storage)
+	ctrl := controller.New(repository, storage)
+	h := httphandler.New(ctrl)
 	http.Handle("/post_tweet", http.HandlerFunc(h.Post))
 	http.Handle("/retrieve_tweet", http.HandlerFunc(h.Retrieve))
 	http.Handle("/delete_tweet", http.HandlerFunc(h.Delete))

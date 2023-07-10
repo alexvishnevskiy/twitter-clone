@@ -88,6 +88,7 @@ func (storage *LocalStorage) Download(storagePath string, downloadPath string) (
 
 // return file location and error
 func (storage *LocalStorage) SaveImageFromRequest(file multipart.File, handler *multipart.FileHeader) (string, error) {
+	// TODO: add more info to path(id...)
 	// Create a new file in the local filesystem
 	fpath := filepath.Join(storage.Path, handler.Filename)
 	dst, err := os.Create(fpath)
@@ -108,10 +109,15 @@ func (storage *LocalStorage) SaveImageFromRequest(file multipart.File, handler *
 func (storage *LocalStorage) ConvertImageFromStorage(storagePath string) (string, error) {
 	imgData, err := ioutil.ReadFile(storagePath)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	// Convert the image data to base64.
 	imgBase64 := base64.StdEncoding.EncodeToString(imgData)
 	return imgBase64, nil
+}
+
+func (storage *LocalStorage) Delete(storagePath string) error {
+	err := os.Remove(storagePath)
+	return err
 }
