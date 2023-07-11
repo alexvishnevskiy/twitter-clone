@@ -6,13 +6,26 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type LocalStorage struct {
 	Path string
+}
+
+func randomString(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	rand.Seed(time.Now().UnixNano())
+
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
 
 func New(path string) *LocalStorage {
@@ -88,9 +101,10 @@ func (storage *LocalStorage) Download(storagePath string, downloadPath string) (
 
 // return file location and error
 func (storage *LocalStorage) SaveImageFromRequest(file multipart.File, handler *multipart.FileHeader) (string, error) {
-	// TODO: add more info to path(id...)
+	// generate random string to store file
+	randString := randomString(5)
 	// Create a new file in the local filesystem
-	fpath := filepath.Join(storage.Path, handler.Filename)
+	fpath := filepath.Join(storage.Path, randString, handler.Filename)
 	dst, err := os.Create(fpath)
 	if err != nil {
 		return "", fmt.Errorf("failed to write file to local system: %s", err)

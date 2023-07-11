@@ -27,9 +27,11 @@ func main() {
 
 	updateHandler := jwt.ValidateMiddleware(http.HandlerFunc(h.Update))
 	deleteHandler := jwt.ValidateMiddleware(http.HandlerFunc(h.Delete))
+	loginHandler := http.HandlerFunc(httphandler.JwtHandler(h.Login))
+	registerHandler := http.HandlerFunc(httphandler.JwtHandler(h.Register))
 
-	http.Handle("/login", http.HandlerFunc(h.Login))
-	http.Handle("/register", http.HandlerFunc(h.Register))
+	http.Handle("/login", loginHandler)
+	http.Handle("/register", registerHandler)
 	http.Handle("/update", updateHandler)
 	http.Handle("/delete", deleteHandler)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {

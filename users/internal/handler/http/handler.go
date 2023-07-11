@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/internal/jwt"
@@ -16,8 +17,42 @@ type Handler struct {
 	ctrl *controller.Controller
 }
 
+// type for handler functions
+type handlerMethod func(http.ResponseWriter, *http.Request)
+
+// key for user_id field
+type ctxKey struct{ name string }
+
+var idCtxKey = &ctxKey{"user_id"}
+
 func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
+}
+
+func JwtHandler(h handlerMethod) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		h(w, req)
+
+		ctx := req.Context()
+		userId, ok := ctx.Value(idCtxKey).(types.UserId)
+		if !ok {
+			http.Error(w, "failed to get id", http.StatusInternalServerError)
+			return
+		}
+
+		token, err := jwt.GenerateJWT(userId)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to generate jwt: %s", err), http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(
+			w, &http.Cookie{
+				Name:  "token",
+				Value: token,
+			},
+		)
+	}
 }
 
 func (h *Handler) Register(w http.ResponseWriter, req *http.Request) {
@@ -52,18 +87,9 @@ func (h *Handler) Register(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("failed to register user: %s", err), http.StatusInternalServerError)
 	}
 
-	token, err := jwt.GenerateJWT(id)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to generate jwt: %s", err), http.StatusInternalServerError)
-		return
-	}
-
-	http.SetCookie(
-		w, &http.Cookie{
-			Name:  "token",
-			Value: token,
-		},
-	)
+	// Set id in request context.
+	ctx := context.WithValue(req.Context(), idCtxKey, id)
+	*req = *req.WithContext(ctx)
 }
 
 func (h *Handler) Login(w http.ResponseWriter, req *http.Request) {
@@ -96,18 +122,9 @@ func (h *Handler) Login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	token, err := jwt.GenerateJWT(userId)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to generate jwt: %s", err), http.StatusInternalServerError)
-		return
-	}
-
-	http.SetCookie(
-		w, &http.Cookie{
-			Name:  "token",
-			Value: token,
-		},
-	)
+	// Set id in request context.
+	ctx := context.WithValue(req.Context(), idCtxKey, userId)
+	*req = *req.WithContext(ctx)
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
