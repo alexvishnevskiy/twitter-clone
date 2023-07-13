@@ -40,7 +40,7 @@ func (r *Repository) Put(
 	content string,
 	mediaUrl *string,
 	retweetId *types.TweetId,
-) (*types.TweetId, error) {
+) (types.TweetId, time.Time, error) {
 	createdAt := time.Now()
 	row, err := r.db.ExecContext(
 		ctx,
@@ -48,11 +48,11 @@ func (r *Repository) Put(
 		userId, retweetId, content, mediaUrl, createdAt.Format(layout),
 	)
 	if err != nil {
-		return nil, err
+		return types.TweetId(0), time.Time{}, err
 	}
 	id, err := row.LastInsertId()
 	tweetId := types.TweetId(id)
-	return &tweetId, err
+	return tweetId, createdAt, err
 }
 
 // helper function to retrieve tweets from database

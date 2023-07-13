@@ -156,14 +156,9 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	}
 
 	file, handler, err := req.FormFile("media")
-	if err != nil && err != http.ErrMissingFile {
-		http.Error(w, "Error retrieving media", http.StatusInternalServerError)
-		return
-	} else if err != nil {
-		http.Error(w, fmt.Sprintf("Error uploading file to the server: %s", err), http.StatusInternalServerError)
-		return
+	if handler != nil {
+		defer file.Close()
 	}
-	defer file.Close()
 
 	tweetId, err := h.ctrl.PostNewTweet(
 		req.Context(),

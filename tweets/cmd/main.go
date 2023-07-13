@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	localcache "github.com/alexvishnevskiy/twitter-clone/internal/cache/local"
 	"github.com/alexvishnevskiy/twitter-clone/internal/storage/local"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	httphandler "github.com/alexvishnevskiy/twitter-clone/tweets/internal/handler/http"
@@ -12,8 +13,12 @@ import (
 )
 
 func main() {
-	var port int
+	var (
+		port     int
+		capacity int
+	)
 	flag.IntVar(&port, "port", 8080, "API handler port")
+	flag.IntVar(&capacity, "capacity", 5000, "Capacity of cache")
 	flag.Parse()
 	log.Printf("Starting the tweets service on port %d", port)
 
@@ -24,7 +29,8 @@ func main() {
 	}
 
 	storage := local.New("/Users/alexander/Downloads/tweets/")
-	ctrl := controller.New(repository, storage)
+	cache := localcache.New(capacity)
+	ctrl := controller.New(repository, storage, cache)
 	h := httphandler.New(ctrl)
 	http.Handle("/post_tweet", http.HandlerFunc(h.Post))
 	http.Handle("/retrieve_tweet", http.HandlerFunc(h.Retrieve))
