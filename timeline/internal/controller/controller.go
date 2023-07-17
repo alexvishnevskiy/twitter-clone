@@ -24,6 +24,7 @@ func New(tweets tweetsGateway, follow followGateway) *Controller {
 	return &Controller{tweets, follow}
 }
 
+// get all tweets from the users who this user is following
 func (ctrl *Controller) GetHomeTimeline(ctx context.Context, userId types.UserId) ([]model.Tweet, error) {
 	users, err := ctrl.FollowService.GetUsers(ctx, userId)
 	if err != nil {

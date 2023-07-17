@@ -13,6 +13,7 @@ import (
 	"strconv"
 )
 
+// handler to handle http requests
 type Handler struct {
 	ctrl *controller.Controller
 }
@@ -28,6 +29,7 @@ func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
 }
 
+// handle follow requests
 func (h *Handler) Follow(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -35,6 +37,7 @@ func (h *Handler) Follow(w http.ResponseWriter, req *http.Request) {
 	}
 	var requestData PostRequest
 
+	// read and unmarshal data from request
 	bodyBytes, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
 	if err != nil {
@@ -48,6 +51,7 @@ func (h *Handler) Follow(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// user_id and follow_id are non nil fields
 	if requestData.UserId == "" && requestData.FollowId == "" {
 		http.Error(w, "user_id and following_id are empty", http.StatusBadRequest)
 		return
@@ -68,18 +72,21 @@ func (h *Handler) Follow(w http.ResponseWriter, req *http.Request) {
 	userID := types.UserId(user)
 	followerID := types.UserId(follower)
 
+	// user controller to make request
 	err = h.ctrl.Follow(req.Context(), userID, followerID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to follow a tweet: %s", err), http.StatusInternalServerError)
 	}
 }
 
+// handle unfollow requests
 func (h *Handler) Unfollow(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// retrieve user_id and following_id
 	user_id := req.FormValue("user_id")
 	userid, err := strconv.Atoi(user_id)
 	if err != nil {
@@ -94,6 +101,7 @@ func (h *Handler) Unfollow(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// handle request with controller
 	userId := types.UserId(userid)
 	followingId := types.UserId(followingid)
 	err = h.ctrl.Unfollow(req.Context(), userId, followingId)
@@ -102,12 +110,14 @@ func (h *Handler) Unfollow(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// helper function to get users with function f
 func getUsers(w http.ResponseWriter, req *http.Request, f retrieveFunc) {
 	if req.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// get user_id
 	user_id := req.FormValue("user_id")
 	userid, err := strconv.Atoi(user_id)
 	if err != nil {
@@ -116,6 +126,7 @@ func getUsers(w http.ResponseWriter, req *http.Request, f retrieveFunc) {
 	}
 
 	userId := types.UserId(userid)
+	// retrieve users with function f
 	users, err := f(req.Context(), userId)
 	if err != nil && !errors.Is(err, mysql.ErrNotFound) {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
@@ -125,15 +136,18 @@ func getUsers(w http.ResponseWriter, req *http.Request, f retrieveFunc) {
 		http.Error(w, "failed to find followers by this user_id", http.StatusNotFound)
 		return
 	}
+	// encode users to json
 	if err := json.NewEncoder(w).Encode(users); err != nil {
 		http.Error(w, "failed to encode followers", http.StatusInternalServerError)
 	}
 }
 
+// get user followers
 func (h *Handler) GetUserFollowers(w http.ResponseWriter, req *http.Request) {
 	getUsers(w, req, h.ctrl.GetUserFollowers)
 }
 
+// get users who are following user
 func (h *Handler) GetFollowingUser(w http.ResponseWriter, req *http.Request) {
 	getUsers(w, req, h.ctrl.GetFollowingUser)
 }

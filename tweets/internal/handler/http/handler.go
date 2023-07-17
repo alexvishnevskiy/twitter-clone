@@ -32,8 +32,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 
 	err := req.ParseForm()
 	if err != nil {
-		//TODO: write more concise error to w
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid request: %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -42,8 +41,7 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 	tweets, tweetsOk := req.Form["tweet_id"]
 
 	if !userOk && !tweetsOk {
-		//TODO: write more concise error to w
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "User_id and tweet_id are not present", http.StatusBadRequest)
 		return
 	}
 	// can retrieve both by user_id and tweet_id
@@ -53,16 +51,14 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		for i, user := range users {
 			userId, err := strconv.Atoi(user)
 			if err != nil {
-				//TODO: write more concise error to w
-				w.WriteHeader(http.StatusBadRequest)
+				http.Error(w, "Bad user_id", http.StatusBadRequest)
 				return
 			}
 			userIds[i] = types.UserId(userId)
 		}
 		tweetsData, err = h.ctrl.RetrieveByUserID(req.Context(), userIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
-			//TODO: write more concise error to w
-			w.WriteHeader(http.StatusNotFound)
+			http.Error(w, fmt.Sprintf("there is no data in db: %s", err), http.StatusNotFound)
 			return
 		}
 	}
@@ -72,16 +68,14 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		for i, tweet := range tweets {
 			tweetId, err := strconv.Atoi(tweet)
 			if err != nil {
-				// TODO: write more concise error to w
-				w.WriteHeader(http.StatusBadRequest)
+				http.Error(w, "Bad tweet_id", http.StatusBadRequest)
 				return
 			}
 			tweetIds[i] = types.TweetId(tweetId)
 		}
 		tweetsData, err = h.ctrl.RetrieveByTweetID(req.Context(), tweetIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
-			// TODO: write more concise error to w
-			w.WriteHeader(http.StatusNotFound)
+			http.Error(w, fmt.Sprintf("there is no data in db: %s", err), http.StatusNotFound)
 			return
 		}
 	}
@@ -106,16 +100,14 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 
 	tweet, err := strconv.Atoi(req.FormValue("tweet_id"))
 	if err != nil {
-		// TODO: write more concise error to w
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Bad tweet_id", http.StatusBadRequest)
 		return
 	}
 
 	tweetID := types.TweetId(tweet)
 	err = h.ctrl.DeletePost(req.Context(), tweetID)
 	if err != nil {
-		// TODO: write more concise error to w
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Could not delete post: %s", err), http.StatusInternalServerError)
 		log.Printf("Failed to delete post: %v\n", err)
 	}
 }

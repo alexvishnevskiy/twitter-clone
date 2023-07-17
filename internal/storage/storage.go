@@ -2,6 +2,7 @@ package storage
 
 import "mime/multipart"
 
+// interface to keep files
 type Storage interface {
 	Delete(storagePath string) error
 	Upload(filePath string) (string, error)                                                  // return url address to file storage

@@ -20,6 +20,7 @@ func New(url string) *Gateway {
 	return &Gateway{url}
 }
 
+// get tweets from tweets service
 func (g *Gateway) GetTweets(ctx context.Context, userId ...types.UserId) ([]model.Tweet, error) {
 	base, _ := url.Parse(g.Url)
 	newURL, _ := url.Parse(path.Join(base.Path, "/retrieve_tweet"))

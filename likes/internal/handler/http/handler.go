@@ -26,6 +26,7 @@ func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
 }
 
+// hanlde like request
 func (h *Handler) Like(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -33,6 +34,7 @@ func (h *Handler) Like(w http.ResponseWriter, req *http.Request) {
 	}
 	var requestData PostRequest
 
+	// read all request data
 	bodyBytes, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
 	if err != nil {
@@ -51,6 +53,7 @@ func (h *Handler) Like(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// preprocess data
 	tweet, err := strconv.Atoi(requestData.TweetId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to parse tweet_id: %s", requestData.TweetId), http.StatusBadRequest)
@@ -71,12 +74,14 @@ func (h *Handler) Like(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// handle unlike request
 func (h *Handler) Unlike(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// read body data
 	req_tweet := req.FormValue("tweet_id")
 	tweet, err := strconv.Atoi(req_tweet)
 	if err != nil {
@@ -93,12 +98,14 @@ func (h *Handler) Unlike(w http.ResponseWriter, req *http.Request) {
 
 	tweetID := types.TweetId(tweet)
 	userID := types.UserId(user)
+	// make request to controller
 	err = h.ctrl.UnlikeTweet(req.Context(), userID, tweetID)
 	if err != nil {
 		http.Error(w, "failed to unlike a tweet", http.StatusInternalServerError)
 	}
 }
 
+// all users who like tweet
 func (h *Handler) GetUsersByTweet(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -128,6 +135,7 @@ func (h *Handler) GetUsersByTweet(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// get all tweets liked by user
 func (h *Handler) GetTweetsByUser(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

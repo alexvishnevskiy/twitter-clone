@@ -29,6 +29,7 @@ func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
 }
 
+// handler to generate jwt token
 func JwtHandler(h handlerMethod) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		h(w, req)
@@ -55,6 +56,7 @@ func JwtHandler(h handlerMethod) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+// handle register method
 func (h *Handler) Register(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -62,6 +64,7 @@ func (h *Handler) Register(w http.ResponseWriter, req *http.Request) {
 	}
 	var requestData model.User
 
+	// read all body data
 	bodyBytes, err := ioutil.ReadAll(req.Body)
 	defer req.Body.Close()
 	if err != nil {

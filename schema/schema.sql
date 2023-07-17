@@ -1,7 +1,6 @@
 CREATE DATABASE IF NOT EXISTS twitter;
 USE twitter;
 
-# TODO: think how to make authorization without storing password
 CREATE TABLE IF NOT EXISTS User (
     user_id INT NOT NULL AUTO_INCREMENT,
     nickname VARCHAR(15) NOT NULL UNIQUE ,

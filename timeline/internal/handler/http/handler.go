@@ -17,6 +17,7 @@ func New(ctrl *controller.Controller) *Hanlder {
 	return &Hanlder{ctrl}
 }
 
+// get all tweets from the users who this user is following
 func (h *Hanlder) GetHomeTimeline(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

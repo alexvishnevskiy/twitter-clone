@@ -19,6 +19,7 @@ func New(url string) *Gateway {
 	return &Gateway{url}
 }
 
+// get user followers from follow service
 func (g *Gateway) GetUsers(ctx context.Context, userId types.UserId) ([]types.UserId, error) {
 	base, _ := url.Parse(g.Url)
 	newURL, _ := url.Parse(path.Join(base.Path, "/user_followers"))

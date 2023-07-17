@@ -26,6 +26,7 @@ func New(driverName string, dataSourceName string) (*Repository, error) {
 }
 
 func (r *Repository) Follow(ctx context.Context, userId types.UserId, followId types.UserId) error {
+	// when user follows someone, insert new row
 	row, err := r.db.ExecContext(
 		ctx,
 		"INSERT INTO Followers (user_id, following_id) VALUES (?, ?)", userId, followId,
@@ -34,6 +35,7 @@ func (r *Repository) Follow(ctx context.Context, userId types.UserId, followId t
 		return err
 	}
 
+	// if no rows are affected, return error
 	_, err = row.RowsAffected()
 	if err != nil {
 		return ErrNotFound
@@ -42,11 +44,13 @@ func (r *Repository) Follow(ctx context.Context, userId types.UserId, followId t
 }
 
 func (r *Repository) Unfollow(ctx context.Context, userId types.UserId, followId types.UserId) error {
+	// when user unfollows someone, delete row
 	row, err := r.db.ExecContext(ctx, "DELETE FROM Followers WHERE user_id = ? AND following_id = ?", userId, followId)
 	if err != nil {
 		return err
 	}
 
+	// if no rows are affected, return error
 	_, err = row.RowsAffected()
 	if err != nil {
 		return ErrNotFound
@@ -54,8 +58,10 @@ func (r *Repository) Unfollow(ctx context.Context, userId types.UserId, followId
 	return nil
 }
 
+// helper function to retrieve users
 func get(ctx context.Context, r *Repository, userId types.UserId, retrieveType int) ([]types.UserId, error) {
 	var query string
+	// GetUserFollowers or GetFollowingUser
 	switch retrieveType {
 	case 0:
 		query = "SELECT following_id FROM Followers WHERE user_id = ?"
@@ -68,6 +74,7 @@ func get(ctx context.Context, r *Repository, userId types.UserId, retrieveType i
 	}
 	defer rows.Close()
 
+	// retrieve all rows -> all users
 	var res []types.UserId
 	// iterate over result
 	for rows.Next() {

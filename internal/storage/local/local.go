@@ -44,6 +44,7 @@ func New(path string) *LocalStorage {
 	return &LocalStorage{Path: path}
 }
 
+// upload file to local storage
 func (storage *LocalStorage) Upload(filePath string) (string, error) {
 	srcFile, err := os.Open(filePath)
 	if err != nil {
@@ -66,6 +67,7 @@ func (storage *LocalStorage) Upload(filePath string) (string, error) {
 	return destPath, nil
 }
 
+// download from local directory
 func (storage *LocalStorage) Download(storagePath string, downloadPath string) (string, error) {
 	srcFile, err := os.Open(storagePath)
 	if err != nil {

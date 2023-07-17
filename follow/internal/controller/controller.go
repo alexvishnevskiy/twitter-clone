@@ -5,6 +5,7 @@ import (
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 )
 
+// the main logic of follow service
 type followRepository interface {
 	Follow(ctx context.Context, userId types.UserId, followId types.UserId) error
 	Unfollow(ctx context.Context, userId types.UserId, followId types.UserId) error
@@ -20,6 +21,7 @@ func New(repo followRepository) *Controller {
 	return &Controller{repo: repo}
 }
 
+// follow to new user
 func (ctrl *Controller) Follow(
 	ctx context.Context,
 	userId types.UserId,
@@ -29,6 +31,7 @@ func (ctrl *Controller) Follow(
 	return err
 }
 
+// unfollow from specific user
 func (ctrl *Controller) Unfollow(
 	ctx context.Context,
 	userId types.UserId,
@@ -38,6 +41,7 @@ func (ctrl *Controller) Unfollow(
 	return err
 }
 
+// get user followers
 func (ctrl *Controller) GetUserFollowers(
 	ctx context.Context,
 	userId types.UserId,
@@ -46,6 +50,7 @@ func (ctrl *Controller) GetUserFollowers(
 	return followers, err
 }
 
+// get everyone who is following user
 func (ctrl *Controller) GetFollowingUser(
 	ctx context.Context,
 	userId types.UserId,
