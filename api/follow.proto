@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package follow;
+
+option go_package = "/follow";
+
+service FollowService {
+  rpc GetUserFollowers(UserId) returns(GetResponse);
+  rpc GetFollowingUser(UserId) returns(GetResponse);
+}
+
+message UserId {
+  int32 user_id = 1;
+}
+
+message GetResponse {
+  repeated UserId user_id = 1;
+}
