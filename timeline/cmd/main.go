@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/timeline/internal/controller"
-	followGateway "github.com/alexvishnevskiy/twitter-clone/timeline/internal/gateway/follow/http"
-	tweetsGateway "github.com/alexvishnevskiy/twitter-clone/timeline/internal/gateway/tweets/http"
+	followGateway "github.com/alexvishnevskiy/twitter-clone/timeline/internal/gateway/follow/grpc"
+	tweetsGateway "github.com/alexvishnevskiy/twitter-clone/timeline/internal/gateway/tweets/grpc"
 	httphandler "github.com/alexvishnevskiy/twitter-clone/timeline/internal/handler/http"
 	"log"
 	"net/http"
@@ -23,8 +23,8 @@ func main() {
 	flag.Parse()
 	log.Printf("Starting timeline service on port %d", port)
 
-	tweetsService := tweetsGateway.New(fmt.Sprintf("http://localhost:%d", tweets_port))
-	followService := followGateway.New(fmt.Sprintf("http://localhost:%d", follow_port))
+	tweetsService := tweetsGateway.New(fmt.Sprintf("localhost:%d", tweets_port))
+	followService := followGateway.New(fmt.Sprintf("localhost:%d", follow_port))
 	ctrl := controller.New(tweetsService, followService)
 	h := httphandler.New(ctrl)
 

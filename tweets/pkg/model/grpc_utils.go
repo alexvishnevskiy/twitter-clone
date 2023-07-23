@@ -20,3 +20,13 @@ func MediaToProto(m *Media) *gen.Media {
 		CreatedAt: protoTimestamp,
 	}
 }
+
+// MediaFromProto converts a proto struct into a
+// media counterpart.
+func MediaFromProto(m *gen.Media) *Media {
+	return &Media{
+		Media:     m.Media,
+		Content:   m.Content,
+		CreatedAt: m.CreatedAt.AsTime(),
+	}
+}

@@ -21,7 +21,7 @@ func New(url string) *Gateway {
 }
 
 // get tweets from tweets service
-func (g *Gateway) GetTweets(ctx context.Context, userId ...types.UserId) ([]model.Tweet, error) {
+func (g *Gateway) GetTweets(ctx context.Context, userId ...types.UserId) ([]model.Media, error) {
 	base, _ := url.Parse(g.Url)
 	newURL, _ := url.Parse(path.Join(base.Path, "/retrieve_tweet"))
 	base = base.ResolveReference(newURL)
@@ -47,7 +47,7 @@ func (g *Gateway) GetTweets(ctx context.Context, userId ...types.UserId) ([]mode
 	if resp.StatusCode/100 != 2 {
 		return nil, fmt.Errorf("non-2xx response: %v", resp)
 	}
-	var tweets []model.Tweet
+	var tweets []model.Media
 	if err := json.NewDecoder(resp.Body).Decode(&tweets); err != nil {
 		return nil, err
 	}

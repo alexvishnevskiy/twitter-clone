@@ -7,7 +7,7 @@ import (
 )
 
 type tweetsGateway interface {
-	GetTweets(ctx context.Context, userId ...types.UserId) ([]model.Tweet, error)
+	GetTweets(ctx context.Context, userId ...types.UserId) ([]model.Media, error)
 }
 
 type followGateway interface {
@@ -25,7 +25,7 @@ func New(tweets tweetsGateway, follow followGateway) *Controller {
 }
 
 // get all tweets from the users who this user is following
-func (ctrl *Controller) GetHomeTimeline(ctx context.Context, userId types.UserId) ([]model.Tweet, error) {
+func (ctrl *Controller) GetHomeTimeline(ctx context.Context, userId types.UserId) ([]model.Media, error) {
 	users, err := ctrl.FollowService.GetUsers(ctx, userId)
 	if err != nil {
 		return nil, err

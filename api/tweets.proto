@@ -11,11 +11,11 @@ service TweetsService {
 }
 
 message UserId {
-  int32 value = 1;
+  int32 user_id = 1;
 }
 
 message TweetId {
-  int32 value = 1;
+  int32 user_id = 1;
 }
 
 message Media {
