@@ -61,6 +61,10 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, fmt.Sprintf("there is no data in db: %s", err), http.StatusNotFound)
 			return
 		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 	if tweetsOk {
 		tweetIds := make([]types.TweetId, len(tweets))
@@ -76,6 +80,10 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 		tweetsData, err = h.ctrl.RetrieveByTweetID(req.Context(), tweetIds...)
 		if err != nil && errors.Is(err, mysql.ErrNotFound) {
 			http.Error(w, fmt.Sprintf("there is no data in db: %s", err), http.StatusNotFound)
+			return
+		}
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}

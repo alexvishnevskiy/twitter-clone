@@ -3,13 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	gen "github.com/alexvishnevskiy/twitter-clone/gen/api/tweets"
 	localcache "github.com/alexvishnevskiy/twitter-clone/internal/cache/local"
 	"github.com/alexvishnevskiy/twitter-clone/internal/storage/local"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
-	httphandler "github.com/alexvishnevskiy/twitter-clone/tweets/internal/handler/http"
+	grpchandler "github.com/alexvishnevskiy/twitter-clone/tweets/internal/handler/grpc"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
-	"net/http"
+	"net"
 )
 
 func main() {
@@ -31,12 +34,22 @@ func main() {
 	storage := local.New("/Users/alexander/Downloads/tweets/")
 	cache := localcache.New(capacity)
 	ctrl := controller.New(repository, storage, cache)
-	h := httphandler.New(ctrl)
-	http.Handle("/post_tweet", http.HandlerFunc(h.Post))
-	http.Handle("/retrieve_tweet", http.HandlerFunc(h.Retrieve))
-	http.Handle("/delete_tweet", http.HandlerFunc(h.Delete))
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
-		panic(err)
+	h := grpchandler.New(ctrl)
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
 	}
+	srv := grpc.NewServer()
+	reflection.Register(srv)
+	gen.RegisterTweetsServiceServer(srv, h)
+	srv.Serve(lis)
+	//h := httphandler.New(ctrl)
+	//http.Handle("/post_tweet", http.HandlerFunc(h.Post))
+	//http.Handle("/retrieve_tweet", http.HandlerFunc(h.Retrieve))
+	//http.Handle("/delete_tweet", http.HandlerFunc(h.Delete))
+	//
+	//if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
+	//	panic(err)
+	//}
 }

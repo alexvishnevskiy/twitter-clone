@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package tweets;
+
+option go_package = "/tweets";
+
+import "google/protobuf/timestamp.proto";
+
+service TweetsService {
+  rpc Retrieve(RetrieveRequest) returns(RetrieveResponse);
+}
+
+message UserId {
+  int32 value = 1;
+}
+
+message TweetId {
+  int32 value = 1;
+}
+
+message Media {
+  string media = 1;
+  string content = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+message RetrieveRequest {
+  repeated int32 user_id = 1;
+  repeated int32 tweet_id = 2;
+}
+
+message RetrieveResponse {
+  repeated Media media_content = 1;
+}
