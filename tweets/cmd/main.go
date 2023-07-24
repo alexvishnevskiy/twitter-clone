@@ -6,11 +6,13 @@ import (
 	gen "github.com/alexvishnevskiy/twitter-clone/gen/api/tweets"
 	localcache "github.com/alexvishnevskiy/twitter-clone/internal/cache/local"
 	"github.com/alexvishnevskiy/twitter-clone/internal/storage/local"
+	_ "github.com/alexvishnevskiy/twitter-clone/tweets/docs"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	grpchandler "github.com/alexvishnevskiy/twitter-clone/tweets/internal/handler/grpc"
 	httphandler "github.com/alexvishnevskiy/twitter-clone/tweets/internal/handler/http"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
 	"github.com/soheilhy/cmux"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -18,6 +20,10 @@ import (
 	"net/http"
 )
 
+// @title Tweets API documentation
+// @version 1.0.0
+// @host localhost:8080
+// @description This is API for tweets service
 func main() {
 	var (
 		port        int
@@ -69,6 +75,7 @@ func main() {
 	http.Handle("/post_tweet", http.HandlerFunc(httph.Post))
 	http.Handle("/retrieve_tweet", http.HandlerFunc(httph.Retrieve))
 	http.Handle("/delete_tweet", http.HandlerFunc(httph.Delete))
+	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	// Start serving!
 	log.Fatal(m.Serve())
 }

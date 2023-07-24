@@ -24,6 +24,16 @@ func New(ctrl *controller.Controller) *Handler {
 }
 
 // Retrieve either by tweet id or user id
+//
+//	    @description    Retrieve either by tweet_id or user_id
+//		@Param			user_id query int false "User ID"
+//		@Param			tweet_id query int false "Tweet ID"
+//		@Success		200	{object}	[]model.Media
+//		@Failure		400	{object}	int
+//		@Failure		404	{object}	int
+//		@Failure		405	{object}	int
+//		@Failure		500	{object}	int
+//		@Router			/retrieve_tweet [get]
 func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -100,6 +110,15 @@ func (h *Handler) Retrieve(w http.ResponseWriter, req *http.Request) {
 }
 
 // Delete by tweet id
+//
+//	    @description    Delete by tweet_id
+//		@Param			tweet_id query int true "Tweet ID"
+//		@Success		200	{object}	int
+//		@Failure		400	{object}	int
+//		@Failure		404	{object}	int
+//		@Failure		405	{object}	int
+//		@Failure		500	{object}	int
+//		@Router			/delete_tweet [delete]
 func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -120,6 +139,19 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// Post tweet
+//
+//		    @description    Post tweet
+//			@Param			user_id body int true "User ID"
+//	        @Param          content body string true "Content"
+//	        @Param          retweet_id body int false "Retweet ID"
+//	        @Param          media formData file false "Media"
+//			@Success		200	{object}	int
+//			@Failure		400	{object}	int
+//			@Failure		404	{object}	int
+//			@Failure		405	{object}	int
+//			@Failure		500	{object}	int
+//			@Router			/post_tweet     [post]
 func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

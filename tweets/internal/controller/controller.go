@@ -312,6 +312,9 @@ func (ctrl *Controller) DeletePost(ctx context.Context, postId types.TweetId) er
 	}
 
 	// delete from storage
-	err = ctrl.storage.Delete(*tweetData[0].MediaUrl)
-	return err
+	if tweetData[0].MediaUrl != nil && *tweetData[0].MediaUrl != "" {
+		err = ctrl.storage.Delete(*tweetData[0].MediaUrl)
+		return err
+	}
+	return nil
 }
