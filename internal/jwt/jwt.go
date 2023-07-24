@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// TODO: put secret key to .env
 var jwtKey = []byte("my_secret_key")
 
 type Claims struct {

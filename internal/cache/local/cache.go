@@ -9,6 +9,7 @@ import (
 	"sync"
 )
 
+// TODO: rewrite to B-tree
 type LRUCache struct {
 	capacity int
 	cache    map[string]*list.Element

@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/follow/internal/controller"
 	grpchandler "github.com/alexvishnevskiy/twitter-clone/follow/internal/handler/grpc"
+	httphandler "github.com/alexvishnevskiy/twitter-clone/follow/internal/handler/http"
 	"github.com/alexvishnevskiy/twitter-clone/follow/internal/repository/mysql"
 	gen "github.com/alexvishnevskiy/twitter-clone/gen/api/follow"
+	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
+	"net/http"
 )
 
 func main() {
@@ -24,26 +27,38 @@ func main() {
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 	}
-
 	ctrl := controller.New(repository)
-	h := grpchandler.New(ctrl)
+
+	// setup the main listener
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
+	// Create a new cmux instance.
+	m := cmux.New(lis)
+	// Match connections in order: first gRPC, then HTTP.
+	grpcL := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
+	httpL := m.Match(cmux.HTTP1Fast())
+
+	// grpc and http server
 	srv := grpc.NewServer()
 	reflection.Register(srv)
-	gen.RegisterFollowServiceServer(srv, h)
-	srv.Serve(lis)
+	httpS := &http.Server{}
 
-	//h := httphandler.New(ctrl)
-	//
-	//http.Handle("/follow", http.HandlerFunc(h.Follow))
-	//http.Handle("/unfollow", http.HandlerFunc(h.Unfollow))
-	//http.Handle("/user_followers", http.HandlerFunc(h.GetUserFollowers))
-	//http.Handle("/following_user", http.HandlerFunc(h.GetFollowingUser))
-	//
-	//if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
-	//	panic(err)
-	//}
+	// Use the servers in goroutines.
+	go srv.Serve(grpcL)
+	go httpS.Serve(httpL)
+
+	// grpc handler
+	grpch := grpchandler.New(ctrl)
+	gen.RegisterFollowServiceServer(srv, grpch)
+	// http handler
+	httph := httphandler.New(ctrl)
+	http.Handle("/follow", http.HandlerFunc(httph.Follow))
+	http.Handle("/unfollow", http.HandlerFunc(httph.Unfollow))
+	http.Handle("/user_followers", http.HandlerFunc(httph.GetUserFollowers))
+	http.Handle("/following_user", http.HandlerFunc(httph.GetFollowingUser))
+	// Start serving!
+	log.Fatal(m.Serve())
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/internal/types"
 	"github.com/alexvishnevskiy/twitter-clone/users/pkg/model"
-	"github.com/stretchr/objx"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type usersRepository interface {
@@ -40,14 +40,14 @@ func New(repo usersRepository) *Controller {
 
 // hash password
 func encodePassword(password string) string {
-	// TODO: replace with decode algorithm
-	return objx.HashWithKey(password, "password")[:5]
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hashedPassword)
 }
 
 // check password
 func checkPassword(enteredPassword string, databasePassword string) bool {
-	// TODO: add logic to check encrypted password and entered password
-	return enteredPassword == databasePassword
+	err := bcrypt.CompareHashAndPassword([]byte(databasePassword), []byte(enteredPassword))
+	return err == nil
 }
 
 func (ctrl *Controller) Register(
