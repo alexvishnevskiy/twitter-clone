@@ -56,7 +56,20 @@ func JwtHandler(h handlerMethod) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
-// handle register method
+// Register handle register method
+//
+//		    @description    Register new user
+//			@Param			password body string true "Password"
+//			@Param			email body string true "Email"
+//	     @Param			nickname body string true "Nickname"
+//	     @Param			first_name body string false "First name"
+//	     @Param          last_name body string false "Last name"
+//			@Success		200	{object}	int
+//			@Failure		400	{object}	int
+//			@Failure		404	{object}	int
+//			@Failure		405	{object}	int
+//			@Failure		500	{object}	int
+//			@Router			/register       [post]
 func (h *Handler) Register(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -95,6 +108,17 @@ func (h *Handler) Register(w http.ResponseWriter, req *http.Request) {
 	*req = *req.WithContext(ctx)
 }
 
+// Login handle login method
+//
+//	    @description    Login for user
+//		@Param			password body string true "Password"
+//		@Param			email body string true "Email"
+//		@Success		200	{object}	int
+//		@Failure		400	{object}	int
+//		@Failure		404	{object}	int
+//		@Failure		405	{object}	int
+//		@Failure		500	{object}	int
+//		@Router			/login       [post]
 func (h *Handler) Login(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -130,6 +154,16 @@ func (h *Handler) Login(w http.ResponseWriter, req *http.Request) {
 	*req = *req.WithContext(ctx)
 }
 
+// Delete handle delete method
+//
+//	    @description    Delete user
+//		@Param			user_id query string true "User id"
+//		@Success		200	{object}	int
+//		@Failure		400	{object}	int
+//		@Failure		404	{object}	int
+//		@Failure		405	{object}	int
+//		@Failure		500	{object}	int
+//		@Router			/delete       [delete]
 func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -148,6 +182,21 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// Update handle update method
+//
+//	    @description    Update user data
+//		@Param			user_id body int true "User id"
+//		@Param			nickname body string false "Nickname"
+//		@Param			first_name body string false "First name"
+//		@Param			last_name body string false "Last name"
+//		@Param			email body string false "Email"
+//		@Param			password body string false "Password"
+//		@Success		200	{object}	int
+//		@Failure		400	{object}	int
+//		@Failure		404	{object}	int
+//		@Failure		405	{object}	int
+//		@Failure		500	{object}	int
+//		@Router			/update       [put]
 func (h *Handler) Update(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPut {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

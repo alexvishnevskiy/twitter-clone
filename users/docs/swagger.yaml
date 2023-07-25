@@ -1,0 +1,184 @@
+host: localhost:8084
+info:
+  contact: {}
+  description: This is API for users service
+  title: Users API documentation
+  version: 1.0.0
+paths:
+  /delete:
+    delete:
+      description: Delete user
+      parameters:
+      - description: User id
+        in: query
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "404":
+          description: Not Found
+          schema:
+            type: integer
+        "405":
+          description: Method Not Allowed
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+  /login:
+    post:
+      description: Login for user
+      parameters:
+      - description: Password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      - description: Email
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "404":
+          description: Not Found
+          schema:
+            type: integer
+        "405":
+          description: Method Not Allowed
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+  /register:
+    post:
+      description: Register new user
+      parameters:
+      - description: Password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      - description: Email
+        in: body
+        name: email
+        required: true
+        schema:
+          type: string
+      - description: Nickname
+        in: body
+        name: nickname
+        required: true
+        schema:
+          type: string
+      - description: First name
+        in: body
+        name: first_name
+        schema:
+          type: string
+      - description: Last name
+        in: body
+        name: last_name
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "404":
+          description: Not Found
+          schema:
+            type: integer
+        "405":
+          description: Method Not Allowed
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+  /update:
+    put:
+      description: Update user data
+      parameters:
+      - description: User id
+        in: body
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      - description: Nickname
+        in: body
+        name: nickname
+        schema:
+          type: string
+      - description: First name
+        in: body
+        name: first_name
+        schema:
+          type: string
+      - description: Last name
+        in: body
+        name: last_name
+        schema:
+          type: string
+      - description: Email
+        in: body
+        name: email
+        schema:
+          type: string
+      - description: Password
+        in: body
+        name: password
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: integer
+        "404":
+          description: Not Found
+          schema:
+            type: integer
+        "405":
+          description: Method Not Allowed
+          schema:
+            type: integer
+        "500":
+          description: Internal Server Error
+          schema:
+            type: integer
+swagger: "2.0"

@@ -4,13 +4,19 @@ import (
 	"flag"
 	"fmt"
 	"github.com/alexvishnevskiy/twitter-clone/internal/jwt"
+	_ "github.com/alexvishnevskiy/twitter-clone/users/docs"
 	"github.com/alexvishnevskiy/twitter-clone/users/internal/controller"
 	httphandler "github.com/alexvishnevskiy/twitter-clone/users/internal/handler/http"
 	"github.com/alexvishnevskiy/twitter-clone/users/internal/repository/mysql"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
 )
 
+// @title Users API documentation
+// @version 1.0.0
+// @host localhost:8084
+// @description This is API for users service
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 8084, "API handler port")
@@ -34,6 +40,7 @@ func main() {
 	http.Handle("/register", registerHandler)
 	http.Handle("/update", updateHandler)
 	http.Handle("/delete", deleteHandler)
+	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		panic(err)
 	}
