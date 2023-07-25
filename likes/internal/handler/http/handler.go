@@ -26,7 +26,17 @@ func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
 }
 
-// hanlde like request
+// Like handle like request
+//
+//	@description	Like specific tweet
+//	@Param			user_id		body		int	true	"User ID"
+//	@Param			tweet_id	body		int	true	"Tweet ID"
+//	@Success		200			{object}	int
+//	@Failure		400			{object}	int
+//	@Failure		404			{object}	int
+//	@Failure		405			{object}	int
+//	@Failure		500			{object}	int
+//	@Router			/like_tweet [post]
 func (h *Handler) Like(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -74,7 +84,17 @@ func (h *Handler) Like(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// handle unlike request
+// Unlike handle unlike request
+//
+//	@description	Unlike specific tweet
+//	@Param			user_id		body		int	true	"User ID"
+//	@Param			tweet_id	body		int	true	"Tweet ID"
+//	@Success		200			{object}	int
+//	@Failure		400			{object}	int
+//	@Failure		404			{object}	int
+//	@Failure		405			{object}	int
+//	@Failure		500			{object}	int
+//	@Router			/unlike_tweet [delete]
 func (h *Handler) Unlike(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -105,7 +125,16 @@ func (h *Handler) Unlike(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// all users who like tweet
+// GetUsersByTweet all users who like tweet
+//
+//	@description	Retrieve all users who liked tweet
+//	@Param			tweet_id	query		int	true	"Tweet ID"
+//	@Success		200			{object}	[]types.UserId
+//	@Failure		400			{object}	int
+//	@Failure		404			{object}	int
+//	@Failure		405			{object}	int
+//	@Failure		500			{object}	int
+//	@Router			/users_tweet [get]
 func (h *Handler) GetUsersByTweet(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -135,7 +164,16 @@ func (h *Handler) GetUsersByTweet(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// get all tweets liked by user
+// GetTweetsByUser get all tweets liked by user
+//
+//	@description	Retrieve all tweet liked by user
+//	@Param			user_id	query		int	true	"User ID"
+//	@Success		200		{object}	[]types.TweetId
+//	@Failure		400		{object}	int
+//	@Failure		404		{object}	int
+//	@Failure		405		{object}	int
+//	@Failure		500		{object}	int
+//	@Router			/tweets_user    [get]
 func (h *Handler) GetTweetsByUser(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

@@ -20,10 +20,10 @@ import (
 	"net/http"
 )
 
-// @title Tweets API documentation
-// @version 1.0.0
-// @host localhost:8080
-// @description This is API for tweets service
+//	@title			Tweets API documentation
+//	@version		1.0.0
+//	@host			localhost:8080
+//	@description	This is API for tweets service
 func main() {
 	var (
 		port        int

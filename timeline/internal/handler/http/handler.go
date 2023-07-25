@@ -21,14 +21,14 @@ func New(ctrl *controller.Controller) *Hanlder {
 
 // GetHomeTimeline get all tweets from the users who this user is following
 //
-//	    @description    Retrieve home timeline
-//		@Param			user_id query int true "User ID"
-//		@Success		200	{object}	[]model.Media
-//		@Failure		400	{object}	int
-//		@Failure		404	{object}	int
-//		@Failure		405	{object}	int
-//		@Failure		500	{object}	int
-//		@Router			/home_timeline [get]
+//	@description	Retrieve home timeline
+//	@Param			user_id	query		int	true	"User ID"
+//	@Success		200		{object}	[]model.Media
+//	@Failure		400		{object}	int
+//	@Failure		404		{object}	int
+//	@Failure		405		{object}	int
+//	@Failure		500		{object}	int
+//	@Router			/home_timeline [get]
 func (h *Hanlder) GetHomeTimeline(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)

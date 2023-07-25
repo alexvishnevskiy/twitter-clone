@@ -29,7 +29,17 @@ func New(ctrl *controller.Controller) *Handler {
 	return &Handler{ctrl}
 }
 
-// handle follow requests
+// Follow handle follow requests
+//
+//	@description	Follow specific user
+//	@Param			user_id			body		int	true	"User ID"
+//	@Param			following_id	body		int	true	"Following ID"
+//	@Success		200				{object}	int
+//	@Failure		400				{object}	int
+//	@Failure		404				{object}	int
+//	@Failure		405				{object}	int
+//	@Failure		500				{object}	int
+//	@Router			/follow [post]
 func (h *Handler) Follow(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -79,7 +89,17 @@ func (h *Handler) Follow(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// handle unfollow requests
+// Unfollow handle unfollow requests
+//
+//	@description	Unfollow specific user
+//	@Param			user_id			query		int	true	"User ID"
+//	@Param			following_id	query		int	true	"Following ID"
+//	@Success		200				{object}	int
+//	@Failure		400				{object}	int
+//	@Failure		404				{object}	int
+//	@Failure		405				{object}	int
+//	@Failure		500				{object}	int
+//	@Router			/unfollow [delete]
 func (h *Handler) Unfollow(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
@@ -142,12 +162,30 @@ func getUsers(w http.ResponseWriter, req *http.Request, f retrieveFunc) {
 	}
 }
 
-// get user followers
+// GetUserFollowers get user followers
+//
+//	@description	Retrieve all user followers
+//	@Param			user_id	query		int	true	"User ID"
+//	@Success		200		{object}	[]types.UserId
+//	@Failure		400		{object}	int
+//	@Failure		404		{object}	int
+//	@Failure		405		{object}	int
+//	@Failure		500		{object}	int
+//	@Router			/user_followers [get]
 func (h *Handler) GetUserFollowers(w http.ResponseWriter, req *http.Request) {
 	getUsers(w, req, h.ctrl.GetUserFollowers)
 }
 
-// get users who are following user
+// GetFollowingUser get users who are following user
+//
+//	@description	Retrieve all following user
+//	@Param			user_id	query		int	true	"User ID"
+//	@Success		200		{object}	[]types.UserId
+//	@Failure		400		{object}	int
+//	@Failure		404		{object}	int
+//	@Failure		405		{object}	int
+//	@Failure		500		{object}	int
+//	@Router			/following_user [get]
 func (h *Handler) GetFollowingUser(w http.ResponseWriter, req *http.Request) {
 	getUsers(w, req, h.ctrl.GetFollowingUser)
 }

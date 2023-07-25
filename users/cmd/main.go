@@ -13,10 +13,10 @@ import (
 	"net/http"
 )
 
-// @title Users API documentation
-// @version 1.0.0
-// @host localhost:8084
-// @description This is API for users service
+//	@title			Users API documentation
+//	@version		1.0.0
+//	@host			localhost:8084
+//	@description	This is API for users service
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 8084, "API handler port")

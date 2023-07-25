@@ -10,6 +10,10 @@ import (
 	"net/http"
 )
 
+//	@title			Likes API documentation
+//	@version		1.0.0
+//	@host			localhost:8081
+//	@description	This is API for likes service
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 8081, "API handler port")

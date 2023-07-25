@@ -3,12 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	_ "github.com/alexvishnevskiy/twitter-clone/follow/docs"
 	"github.com/alexvishnevskiy/twitter-clone/follow/internal/controller"
 	grpchandler "github.com/alexvishnevskiy/twitter-clone/follow/internal/handler/grpc"
 	httphandler "github.com/alexvishnevskiy/twitter-clone/follow/internal/handler/http"
 	"github.com/alexvishnevskiy/twitter-clone/follow/internal/repository/mysql"
 	gen "github.com/alexvishnevskiy/twitter-clone/gen/api/follow"
 	"github.com/soheilhy/cmux"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"log"
@@ -16,6 +18,10 @@ import (
 	"net/http"
 )
 
+// @title			Follow API documentation
+// @version		1.0.0
+// @host			localhost:8082
+// @description	This is API for follow service
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 8082, "API handler port")
@@ -59,6 +65,7 @@ func main() {
 	http.Handle("/unfollow", http.HandlerFunc(httph.Unfollow))
 	http.Handle("/user_followers", http.HandlerFunc(httph.GetUserFollowers))
 	http.Handle("/following_user", http.HandlerFunc(httph.GetFollowingUser))
+	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	// Start serving!
 	log.Fatal(m.Serve())
 }

@@ -12,10 +12,10 @@ import (
 	"net/http"
 )
 
-// @title Timeline API documentation
-// @version 1.0.0
-// @host localhost:8083
-// @description This is API for timeline service
+//	@title			Timeline API documentation
+//	@version		1.0.0
+//	@host			localhost:8083
+//	@description	This is API for timeline service
 func main() {
 	var (
 		port        int
