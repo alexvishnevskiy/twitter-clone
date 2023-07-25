@@ -7,10 +7,15 @@ import (
 	followGateway "github.com/alexvishnevskiy/twitter-clone/timeline/internal/gateway/follow/grpc"
 	tweetsGateway "github.com/alexvishnevskiy/twitter-clone/timeline/internal/gateway/tweets/grpc"
 	httphandler "github.com/alexvishnevskiy/twitter-clone/timeline/internal/handler/http"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
 )
 
+// @title Timeline API documentation
+// @version 1.0.0
+// @host localhost:8083
+// @description This is API for timeline service
 func main() {
 	var (
 		port        int
@@ -29,6 +34,7 @@ func main() {
 	h := httphandler.New(ctrl)
 
 	http.Handle("/home_timeline", http.HandlerFunc(h.GetHomeTimeline))
+	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		panic(err)
 	}
