@@ -32,7 +32,7 @@ func TestRepository_Register(t *testing.T) {
 		WithArgs(user.UserId, user.Nickname, user.FirstName, user.LastName, user.Email, user.Password).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.Register(ctx, user.UserId, user.Nickname, user.FirstName, user.LastName, user.Email, user.Password)
+	_, err = repo.Register(ctx, user.Nickname, user.FirstName, user.LastName, user.Email, user.Password)
 	if err != nil {
 		t.Errorf("Error was not expecting while register: %s", err)
 	}
@@ -83,7 +83,7 @@ func TestRepository_RetrievePassword(t *testing.T) {
 		WithArgs(mail).
 		WillReturnRows(row)
 
-	retrievedPassword, err := repo.RetrievePassword(ctx, mail)
+	_, retrievedPassword, err := repo.RetrievePassword(ctx, mail)
 	if err != nil {
 		t.Errorf("Failed to retrieve password: %s", err)
 	}

@@ -26,7 +26,7 @@ func main() {
 	var port int
 	flag.IntVar(&port, "port", 8082, "API handler port")
 	flag.Parse()
-	log.Printf("Starting the tweets service on port %d", port)
+	log.Printf("Starting the follow service on port %d", port)
 
 	// probably use configs for driverName and dataSourceName
 	repository, err := mysql.New("mysql", "root:root@tcp(localhost:3306)/twitter")

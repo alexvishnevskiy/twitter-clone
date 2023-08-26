@@ -10,6 +10,7 @@ import (
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/controller"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/internal/repository/mysql"
 	"github.com/alexvishnevskiy/twitter-clone/tweets/pkg/model"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -157,34 +158,31 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
+	requestData := model.Tweet{}
+	var retweetId *types.TweetId = nil
 	// 1 << 16 is the maximum size you can read from the request
 	req.ParseMultipartForm(1 << 16)
 
-	var retweetId *types.TweetId = nil
+	bodyBytes, err := ioutil.ReadAll(req.Body)
+	defer req.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	UserId := req.FormValue("user_id")
-	Content := req.FormValue("content")
-	RetweetId := req.FormValue("retweet_id")
+	err = json.Unmarshal(bodyBytes, &requestData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	if UserId == "" && Content == "" {
+	if requestData.UserId == 0 && requestData.Content == "" {
 		http.Error(w, "user_id and content are empty", http.StatusBadRequest)
 		return
 	}
 
-	userId, err := strconv.Atoi(UserId)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to parse user_id: %s", UserId), http.StatusBadRequest)
-		return
-	}
-
-	if RetweetId != "" {
-		tweetId, err := strconv.Atoi(RetweetId)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to parse retweetId: %d", RetweetId), http.StatusBadRequest)
-			return
-		}
-		tweet := types.TweetId(tweetId)
-		retweetId = &tweet
+	if requestData.RetweetId != nil {
+		retweetId = requestData.RetweetId
 	}
 
 	file, handler, err := req.FormFile("media")
@@ -196,8 +194,8 @@ func (h *Handler) Post(w http.ResponseWriter, req *http.Request) {
 		req.Context(),
 		file,
 		handler,
-		types.UserId(userId),
-		Content,
+		requestData.UserId,
+		requestData.Content,
 		retweetId,
 	)
 

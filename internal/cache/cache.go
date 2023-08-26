@@ -20,7 +20,7 @@ func GenerateUserId(id types.UserId) string {
 
 // function to generate user_id_tweet_id keys for cache
 func GenerateUserToTweetId(user_id types.UserId, tweet_id types.TweetId) string {
-	return fmt.Sprintf("user_id_%d_tweet_id%d", user_id, tweet_id)
+	return fmt.Sprintf("user_id_%d_tweet_id_%d", user_id, tweet_id)
 }
 
 // function to generate tweet_id keys for cache

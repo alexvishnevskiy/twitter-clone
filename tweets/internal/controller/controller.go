@@ -162,13 +162,13 @@ func (ctrl *Controller) PostNewTweet(
 	// save to storage
 	if handler != nil {
 		url, err = ctrl.storage.SaveImageFromRequest(file, handler)
+		MediaUrl = &url
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	// save to db
-	MediaUrl = &url
 	tweetId, time, err := ctrl.repo.Put(ctx, userId, content, MediaUrl, retweetId)
 	// tweet metadata
 	tweet := model.Tweet{
