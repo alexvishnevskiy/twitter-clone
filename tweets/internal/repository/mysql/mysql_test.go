@@ -25,7 +25,7 @@ func TestRepository_Put(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), "some content", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	_, err = repo.Put(ctx, types.UserId(1), "some content", nil, nil)
+	_, _, err = repo.Put(ctx, types.UserId(1), "some content", nil, nil)
 	if err != nil {
 		t.Errorf("error was not expected while inserting tweet: %s", err)
 	}

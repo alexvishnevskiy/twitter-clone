@@ -29,7 +29,7 @@ func TestRepository_Register(t *testing.T) {
 	}
 
 	mock.ExpectExec("INSERT INTO User").
-		WithArgs(user.UserId, user.Nickname, user.FirstName, user.LastName, user.Email, user.Password).
+		WithArgs(user.Nickname, user.FirstName, user.LastName, user.Email, user.Password).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	_, err = repo.Register(ctx, user.Nickname, user.FirstName, user.LastName, user.Email, user.Password)
@@ -76,10 +76,10 @@ func TestRepository_RetrievePassword(t *testing.T) {
 
 	mail := "somemail@mail.com"
 	password := "password"
-	row := sqlmock.NewRows([]string{"password"}).
-		AddRow(password)
+	row := sqlmock.NewRows([]string{"user_id", "password"}).
+		AddRow(1, password)
 
-	mock.ExpectQuery("SELECT password FROM User WHERE email = ?").
+	mock.ExpectQuery("SELECT user_id, password FROM User WHERE email = ?").
 		WithArgs(mail).
 		WillReturnRows(row)
 

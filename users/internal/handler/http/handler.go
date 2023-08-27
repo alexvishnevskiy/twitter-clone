@@ -178,7 +178,7 @@ func (h *Handler) Delete(w http.ResponseWriter, req *http.Request) {
 
 	err = h.ctrl.Delete(req.Context(), types.UserId(userId))
 	if err != nil {
-		http.Error(w, fmt.Sprint("failed to delete: %s", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("failed to delete: %s", err), http.StatusBadRequest)
 	}
 }
 
